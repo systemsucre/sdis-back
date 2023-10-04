@@ -9,11 +9,11 @@ const gestion = new Gestion()
 
 rutas.post("/listar", async (req, res) => {
     try {
-        const resultado = await gestion.listar()
+        const resultado = await gestion.listar() 
         return res.json({ data: resultado, ok: true })
     } catch (error) {
         console.log(error)
-        return res.json({ ok: false, msg: 'Error en el servidor' })
+        return res.json({ ok: false, msg: 'Error en el servidor' }) 
     }
 
 })

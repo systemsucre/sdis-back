@@ -1,6 +1,6 @@
 import { Router } from "express"
 import { Usuario } from "../modelo/usuario.js"
-import { eliminar, buscar, siguiente, insertar, actualizar, recet } from '../validacion/usuario.js'
+import { buscar, siguiente, insertar, actualizar, recet, validar } from '../validacion/usuario.js'
 import { CLAVEGMAIL } from '../config.js'
 import nodemailer from "nodemailer";
 //const modelo from "../modelo/usuario.js"
@@ -14,7 +14,7 @@ const usuarios = new Usuario()
 
 rutas.post("/listar1", async (req, res) => {
     try {
-        const resultado = await usuarios.listarActivos(req.body.usuario)
+        const resultado = await usuarios.listarActivos(req.body.usuario, req.body.cantidad)
         return res.json({ data: resultado, ok: true })
     } catch (error) {
         console.log(error)
@@ -23,7 +23,7 @@ rutas.post("/listar1", async (req, res) => {
 })
 rutas.post("/listar2", async (req, res) => {
     try {
-        const resultado = await usuarios.listarNoActivos(req.body.usuario)
+        const resultado = await usuarios.listarNoActivos(req.body.usuario, req.body.cantidad)
         return res.json({ data: resultado, ok: true })
     } catch (error) {
         console.log(error)
@@ -53,9 +53,9 @@ rutas.post("/rol", async (req, res) => {
     }
 })
 
-rutas.post("/establecimientos", siguiente, async (req, res) => {
+rutas.post("/establecimientos", async (req, res) => {
     try {
-        const resultado = await usuarios.listarHospital(req.body.id)
+        const resultado = await usuarios.listarHospital()
         return res.json(resultado)
     } catch (error) {
         return res.status(500).send(error)
@@ -102,7 +102,7 @@ rutas.post("/next", siguiente, async (req, res) => {
 
     let id = req.body.id
     try {
-        const resultado = await usuarios.listarSiguiente(id, req.body.usuario)
+        const resultado = await usuarios.listarSiguiente(id, req.body.usuario, req.body.cantidad)
         if (resultado.length > 0)
             return res.json({ ok: true, data: resultado })
         else
@@ -116,7 +116,7 @@ rutas.post("/next", siguiente, async (req, res) => {
 rutas.post("/anterior", siguiente, async (req, res) => {
     let id = req.body.id
     try {
-        const resultado = await usuarios.listarAnterior(id, req.body.usuario)
+        const resultado = await usuarios.listarAnterior(id, req.body.usuario, req.body.cantidad)
         if (resultado.length > 0)
             return res.json({ ok: true, data: resultado })
         else
@@ -129,10 +129,9 @@ rutas.post("/anterior", siguiente, async (req, res) => {
 })
 
 rutas.post("/next_", siguiente, async (req, res) => {
-
     let id = req.body.id
     try {
-        const resultado = await usuarios.listarSiguiente_(id, req.body.usuario)
+        const resultado = await usuarios.listarSiguiente_(id, req.body.usuario, req.body.cantidad)
         if (resultado.length > 0)
             return res.json({ ok: true, data: resultado })
         else
@@ -146,7 +145,7 @@ rutas.post("/next_", siguiente, async (req, res) => {
 rutas.post("/anterior_", siguiente, async (req, res) => {
     let id = req.body.id
     try {
-        const resultado = await usuarios.listarAnterior_(id, req.body.usuario)
+        const resultado = await usuarios.listarAnterior_(id, req.body.usuario, req.body.cantidad)
         if (resultado.length > 0)
             return res.json({ ok: true, data: resultado })
         else
@@ -179,24 +178,23 @@ rutas.post("/registrar", insertar, async (req, res) => {
 
     console.log('datos: ', req.body)
     const { username, otros, hospital, rol_, nombre, ape1,
-        ape2, celular, direccion, correo, creado, usuario } = req.body
+        ape2, celular, correo, creado, usuario } = req.body
     const datos = {
         username,
         pass: otros,
         establecimiento: hospital,
-        rol:rol_,
+        rol: rol_,
         nombre,
         apellido1: ape1,
         apellido2: ape2,
         celular,
-        direccion,
         correo,
         estado: 1,
         creado,
         usuario
     }
     try {
-        const resultado = await usuarios.insertar(datos)
+        const resultado = await usuarios.insertar(datos, req.body.cantidad)
 
         if (resultado.existe === 1)
             return res.json({ ok: false, msg: 'Este usuario ya esta registrado' })
@@ -216,29 +214,28 @@ rutas.post("/actualizar", actualizar, async (req, res) => {
 
     console.log('datos: ', req.body)
 
-    const { id, rol_, hospital, nombre, ape1,
-        ape2, celular, direccion, correo, modificado, usuario } = req.body
+    const { id, rol_, estado, hospital, nombre, ape1,
+        ape2, celular, correo, modificado, usuario, } = req.body
     const datos = {
         id,
-        rol:rol_,
+        rol: rol_, estado,
         hospital,
         nombre,
         ape1,
         ape2,
         celular,
-        direccion,
         correo,
         modificado,
-        usuario
+        usuario,
     }
     try {
         const resultado = await usuarios.actualizar(datos)
         if (resultado.existe === 1)
-            return res.json({ ok: false, msg: 'Este usuario ya esta registrado' })
+            return res.json({ ok: false, msg: 'Usuario ya esta registrado' })
         if (resultado.existe === 2)
-            return res.json({ ok: false, msg: 'Este correo ya esta registrado' })
+            return res.json({ ok: false, msg: 'Correo ya esta registrado' })
         else
-            return res.json({ data: resultado, ok: true, msg: "El Registro se ha actualizado correctamente" });
+            return res.json({ data: resultado, ok: true, msg: "Registro actualizado correctamente" });
 
     } catch (error) {
         console.log(error)
@@ -246,22 +243,7 @@ rutas.post("/actualizar", actualizar, async (req, res) => {
     }
 })
 
-rutas.post("/eliminar", eliminar, async (req, res) => {
-    // console.log(req.body)
-    try {
-        const { id, modificado, usuario } = req.body;
-        const datos = {
-            id, modificado, usuario
-        }
-        const resultado = await usuarios.eliminar(datos)
-        return res.json({ data: resultado, ok: true, msg: 'El usuario se ha eliminado exitosamente' })
 
-    } catch (error) {
-        console.log(error)
-        return res.json({ ok: false, msg: 'Operacion fállida, Consulte con el administrador' })
-    }
-
-})
 
 
 rutas.post("/recet", recet, async (req, res) => {
@@ -273,9 +255,37 @@ rutas.post("/recet", recet, async (req, res) => {
         }
         const resultado = await usuarios.recet(datos)
         if (resultado)
-            return res.json({ ok: true, msg: 'La contraseña ha reiciado correctamete' })
+            return res.json({ ok: true, msg: 'Contraseña se ha reiciado correctamete' })
         else
-            return res.json({ ok: false, msg: 'La contraseña no se ha actualizado!' })
+            return res.json({ ok: false, msg: 'Contraseña no se ha actualizado!' })
+    } catch (error) {
+        console.log(error)
+        return res.json({ ok: false, msg: 'Operacion fállida, Consulte con el administrador' })
+    }
+
+})
+
+
+rutas.post("/validar", validar, async (req, res) => {
+    // console.log(req.body)
+    try {
+        const { id, rol_, hospital, nombre, ape1,
+            ape2, celular, correo, modificado, usuario, cantidad} = req.body
+        const datos = {
+            id,
+            rol: rol_,
+            hospital,
+            nombre,
+            ape1,
+            ape2,
+            celular,
+            correo,
+            modificado,
+            usuario,cantidad
+        }
+        const resultado = await usuarios.validar(datos)
+        return res.json({ ok: true, data: resultado, msg: 'El usuario activado correctamente' })
+
     } catch (error) {
         console.log(error)
         return res.json({ ok: false, msg: 'Operacion fállida, Consulte con el administrador' })

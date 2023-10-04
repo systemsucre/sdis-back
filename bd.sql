@@ -17,7 +17,6 @@ create table red(
     modificado datetime null,
     usuario int not null,
     eliminado boolean DEFAULT false,
-    rol int not null,
     PRIMARY key(id),
     FOREIGN key(municipio) REFERENCES municipio(id)
 ) create table rol(
@@ -64,8 +63,8 @@ create table red(
 
 create table mes(
     id int AUTO_INCREMENT,
+    num int not null,
     mes text not null,
-    estado boolean DEFAULT false,
     ini datetime not null,
     fin datetime not null,
     eliminado boolean DEFAULT false,
@@ -80,7 +79,7 @@ create table variable(
     num int not null,
     variable text not null,
     gestion int not null,
-    eliminado boolean DEFAULT false,
+    estado int DEFAULT 0,
     creado datetime not null,
     modificado datetime null,
     usuario int not null,
@@ -91,7 +90,9 @@ create table variable(
     num int not null,
     indicador text not null,
     variable int,
-    eliminado boolean DEFAULT false,
+    ini date not null,
+    fin date not null,
+    estado int DEFAULT 1,
     creado datetime not null,
     modificado datetime null,
     usuario int not null,
@@ -104,17 +105,20 @@ create table variable(
     input text not null,
     orden int not null,
     nivel int not null,
+    ini date not null,
+    fin date not null,
     tope boolean DEFAULT 1,
     variable int not null,
     indicador_ int not null,
-    eliminado boolean DEFAULT false,
+    cod text not null,
+    estado int DEFAULT 1,
     creado datetime not null,
     modificado datetime null,
     usuario int not null,
+    ordengen int not null,
     primary key(id),
     FOREIGN key(indicador) REFERENCES indicador(id)
-)
- CREATE TABLE valor (
+) CREATE TABLE valor (
     id int(11) NOT NULL AUTO_INCREMENT,
     valor int(11) DEFAULT 0,
     fecha date DEFAULT NULL,
@@ -123,6 +127,7 @@ create table variable(
     mes int(11) NOT NULL,
     usuario int(11) NOT NULL,
     input int(11) NOT NULL,
+    cod text not null,
     indicador int not null,
     variable int not null,
     establecimiento int(11) NOT NULL,
@@ -132,4 +137,14 @@ create table variable(
     FOREIGN KEY (usuario) REFERENCES usuario (id),
     FOREIGN KEY (input) REFERENCES input (id),
     FOREIGN KEY (establecimiento) REFERENCES establecimiento (id)
+) create table cabeceras(
+    id int AUTO_INCREMENT,
+    variable int not null,
+    nivel int not null,
+    idinput int null,
+    input text not null,
+    tope int not null,
+    orden int not null,
+    primary key (id),
+    FOREIGN key(variable) REFERENCES variable(id)
 )

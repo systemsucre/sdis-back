@@ -16,13 +16,16 @@ export class Registro {
         return rows
     }
     listarMes = async (gestion, fecha) => {
+        // console.log(gestion)
         const sql =
             `SELECT m.id, concat(m.mes) as nombre 
             FROM mes m
             inner join gestion g on g.id = m.gestion 
-            where (m.estado = 1 or (${pool.escape(fecha)} >= m.ini and ${pool.escape(fecha)} <= m.fin)) 
-            and m.eliminado = false and g.id = ${pool.escape(gestion)} ORDER BY m.mes ASC `;
+            where  ${pool.escape(fecha)} >= m.ini and ${pool.escape(fecha)} <= m.fin
+            and m.eliminado = false and g.id = ${pool.escape(gestion)} ORDER BY m.ini asc `;
         const [rows] = await pool.query(sql)
+        // console.log(sql, rows)
+
         return rows
     }
     listarVariable = async (gestion, rol) => {
@@ -30,7 +33,7 @@ export class Registro {
             `SELECT v.id, concat(v.num,'.',v.variable) as nombre 
             FROM variable v
             inner join gestion g on g.id = v.gestion 
-            where v.eliminado = false and g.id = ${pool.escape(gestion)} and rol = ${pool.escape(rol)} ORDER BY v.num ASC `;  
+            where g.id = ${pool.escape(gestion)} and rol = ${pool.escape(rol)} and v.estado = 1  ORDER BY v.num ASC `;
         const [rows] = await pool.query(sql)
         return rows
     }
@@ -40,137 +43,140 @@ export class Registro {
             `SELECT i.id, concat(i.num,'.',i.indicador) as indicador
             FROM indicador i
             inner join variable v on v.id = i.variable
-            where i.eliminado = false and v.id = ${pool.escape(datos.variable)} ORDER BY i.num ASC `;
+            where i.estado = 1 and v.id = ${pool.escape(datos.variable)} 
+            and ${pool.escape(datos.fecha)} >= i.ini and ${pool.escape(datos.fecha)} <= i.fin ORDER BY i.num ASC `;
         const [rows1] = await pool.query(sql1)
-
-        // EL ORDEN ES EL ID DEL INPUT, CONSIDERAR PONER OTRO ATRIBUTO A LA TABLA PARA ORDENAR LOS VALORES QUE PERTENECEN AL INDICADOR
+        // console.log(rows1, 'lista ordenada', sql1)
+        // EL ORDEN ES EL ORDENGEN DEL INPUT, ESTE VALOR SE LISTA PARA LAS TABLAS
         const sql2 =
-            `SELECT ip.id, i.id as idindicador, vl.valor
-                FROM variable v
-                inner join indicador i on v.id = i.variable
-                inner join valor vl on i.id = vl.indicador
-                inner join input ip on ip.id = vl.input 
-                where v.id = ${pool.escape(datos.variable)} and vl.mes = ${pool.escape(datos.mes)} and vl.establecimiento =${pool.escape(datos.sest)} 
-                ORDER BY ip.indicador_, ip.id  ASC `;
+            `SELECT ip.id, vl.indicador as idindicador, vl.valor
+            FROM valor vl
+            inner join input ip on ip.id = vl.input
+            inner join indicador ind on ind.id = vl.indicador
+                where vl.variable = ${pool.escape(datos.variable)} and vl.mes = ${pool.escape(datos.mes)} and vl.establecimiento =${pool.escape(datos.sest)} 
+                and ip.estado = 1 and ind.estado = 1
+                ORDER BY ip.ordengen  ASC `;
+
         const [rows2] = await pool.query(sql2)
 
+        console.log(rows1, rows2)
         return [rows1, rows2]
+    }
+
+
+    cantidadItem = async (id) => {
+        const sql =
+            `select count(id) as cantidad from cabeceras WHERE idinput = ${pool.escape(id)};`;
+        const [rows] = await pool.query(sql)
+        // console.log(rows[0].cantidad)
+        return rows[0].cantidad
     }
 
 
     listarValoresInput = async (datos) => {
 
-        const sqlvalores = `select v.valor from valor v 
-                            inner join variable i on i.id = v.variable
-                            where v.variable = ${pool.escape(datos.variable)} and 
-                            v.establecimiento = ${pool.escape(datos.establecimiento)} and 
-                            v.mes= ${pool.escape(datos.mes)}`
+        const sqlvalores = `select valor from valor  
+                            where indicador = ${pool.escape(datos.id)} and 
+                            establecimiento = ${pool.escape(datos.establecimiento)} and 
+                            mes= ${pool.escape(datos.mes)}`
         const [rowsValores] = await pool.query(sqlvalores)
-        // LA INFORMACION SE LLENA DE MANERA MENSUAL, SE DEBE IMPEDIR CREAR MAS DE UN VALOR EN UN MISMO MES
-        // SI rowsValores NO TIENE NINGUNA INFORMACION INSERTAMOS CEROS EN TODAS LAS TABLAS 
-        // HACEMOS UN BUCLE CON TODOS LOS IDS DE LA VARAIBLE OBTENIDOS DE LA TABLA INPUT
+
 
         if (rowsValores.length === 0) {
-            const sqltope = `select i.id, ind.id as indicador from variable v 
-                            inner join indicador ind on v.id = ind.variable
-                            inner join input i on ind.id = i.indicador_
-                            where i.tope = 1 and i.eliminado = false and v.id = ${pool.escape(datos.variable)}`
+
+            const sqltope = `select id, indicador_ as indicador, orden, cod from  input
+                            where tope = 1 and indicador_ = ${pool.escape(datos.id)} 
+                            order by ordengen asc`
             const [tope] = await pool.query(sqltope)
-            console.log(tope)
+            console.log(tope, 'lista de datos obtenidos, probando atribute')
             await tope.forEach(async e => {
                 const dataInsert = {
-                    valor: 0, fecha: datos.fecha, hora: datos.hora, gestion: datos.gestion, mes: datos.mes, variable: datos.variable,
-                    usuario: datos.usuario, input: e.id, establecimiento: datos.establecimiento, indicador: e.indicador
+                    valor: 0, fecha: datos.fecha, hora: datos.hora, gestion: datos.gestion, mes: datos.mes, cod: e.cod, variable: datos.variable,
+                    usuario: datos.usuario, input: e.id, establecimiento: datos.establecimiento, indicador: e.indicador,
                 }
                 await pool.query('INSERT INTO valor SET  ?', dataInsert)
+
             })
         }
+
         // OBTENEMOS VALOR PARA RELLENAR CAMPOS EN EL CLIENTE
         const sql =
             `SELECT i.id, vl.valor
-        from variable v
-        inner join input i on v.id = i.variable
-        inner join valor vl on i.id = vl.input
-        where i.eliminado =  false and v.id = ${pool.escape(datos.variable)} and vl.mes = ${pool.escape(datos.mes)} and vl.establecimiento = ${pool.escape(datos.establecimiento)}
-        ORDER BY i.id ASC`;
+                    from variable v
+                    inner join input i on v.id = i.variable 
+                    inner join valor vl on i.id = vl.input
+                    where i.estado = 1 and vl.indicador = ${pool.escape(datos.id)} and vl.mes = ${pool.escape(datos.mes)} and
+                     vl.establecimiento = ${pool.escape(datos.establecimiento)}
+                    ORDER BY i.ordengen ASC`;
         const [rows] = await pool.query(sql)
+
 
         return rows
     }
 
+
+
+
+
     listarInput = async (datos) => {
 
         const sql =
-            `SELECT i.nivel, i.id,  i.input, i.orden, i.idinput, i.tope,  ind.id as idindicador, concat(ind.num,'.',ind.indicador) as indicador, ind.num as ordensup
+            `SELECT i.nivel, i.id,  i.input, i.orden, i.idinput, i.tope,  ind.id as idindicador, concat(ind.num,'.',ind.indicador) as indicador, ind.num as ordensup, 
+            if (${pool.escape(datos.fecha)} >= i.ini and ${pool.escape(datos.fecha)} <= i.fin, 1, 0) as estado
             from input i
             inner join indicador ind on ind.id = i.indicador
-            where i.eliminado =  false and ind.id = ${pool.escape(datos.id)} 
-            ORDER BY i.id ASC`;
+            where i.estado =  1 and ind.id = ${pool.escape(datos.id)} 
+            ORDER BY i.orden ASC`;
         const [rows] = await pool.query(sql)
+        // console.log(rows)
 
         return rows
     }
 
     listarInput2 = async (datos) => {
         const sqlDependiente =
-            `SELECT i.nivel,i.id, i.input, i.orden, i.idinput,  i.tope, '' as indicador, '' as idindicador, '' as ordensup
+            `SELECT i.nivel,i.id, i.input, i.orden, i.idinput,  i.tope, '' as indicador, '' as idindicador, '' as ordensup,
+            if (${pool.escape(datos.fecha)} >= i.ini and ${pool.escape(datos.fecha)} <= i.fin, 1, 0) as estado
                         from input i
                         inner join input ind on ind.id = i.idinput
-                        where i.eliminado =  false and ind.id = ${pool.escape(datos.id)}
+                        where i.estado =  1 and ind.id = ${pool.escape(datos.id)}
                         ORDER BY i.orden DESC`;
         const [arrayNivel2] = await pool.query(sqlDependiente)
-
         return arrayNivel2
     }
 
-    insertar = async (info, data) => {
 
 
-        // BUSCAR LA MANERA DE OBTENER LOS IDS DE LOS INPUTS CON TOPE IGUAL A 1 QUE PERTENEZCAN A DICHA VARIABLE,
-        // PREFERIBLIEMENTE SE PUEDE HACER DESDE EL CLIENTE I ENVIAR ESTOS IDS AL MOMENTO DE SOLICITAR EL REGISTRO DE VALORES, 
-        // AUNQUE ESTO LLEVE MAS TIEMPO Y PROCESAMIENTO
-        // LA ULTIMA OPCION ES CREAR UN ATRIBUTO VARIABLE EN LA TABLA INPUT, (OPCION ELEGIDA)
+    insertar = async (info) => {
 
 
-        // const sqltope = `select i.id from input i 
-        // inner join variable v on v.id = i.variable
-        // where i.tope = 1 and i.eliminado = false and v.id = ${pool.escape(info.variable)}`
-        // const [tope] = await pool.query(sqltope)
-        // console.log(data, tope)
-
-
-        // await tope.forEach(async e => {
-        await data.forEach(async e1 => {
-            // if (parseInt(e1.id) === parseInt(e.id)) {
-
-            const sqlRegistrado = `select id  
-                from valor where input = ${pool.escape(e1.id)} and establecimiento = ${pool.escape(info.establecimiento)} and variable = ${pool.escape(info.variable)} `
-            const [registrado] = await pool.query(sqlRegistrado)
-            if (registrado.length > 0) {
-
-                console.log(registrado, e1, 'registrado')
-                const sqlUpd = `update valor set 
-                        valor = ${pool.escape(e1.valor)},
-                        usuario = ${pool.escape(info.usuario)},
-                        fecha = ${pool.escape(info.fecha)},
-                        hora = ${pool.escape(info.hora)}
-                        where mes = ${pool.escape(info.mes)} and establecimiento = ${pool.escape(info.establecimiento)} and 
-                        input = ${pool.escape(e1.id)}`
-                pool.query(sqlUpd)
-            } else {
-                const datoFaltante = {
-                    valor: e1.valor, fecha: info.fecha, hora: info.hora, gestion: info.gestion, mes: info.mes, variable: info.variable,
-                    usuario: info.usuario, input: e1.id, establecimiento: info.establecimiento, indicador: info.indicador
-                }
-                await pool.query('INSERT INTO valor SET  ?', datoFaltante)
-                console.log(registrado, e1, 'no registrado')
-
+        const sqlExiste = `select id from  valor
+        where mes = ${pool.escape(info.mes)} and 
+        establecimiento = ${pool.escape(info.establecimiento)} and input = ${pool.escape(parseInt(info.input))}`
+        const [lista] = await pool.query(sqlExiste)
+        console.log(lista)
+        if (lista.length > 0) {
+            const sqlUpd = `update valor set 
+                                    valor = ${pool.escape(parseInt(info.valor))},
+                                    usuario = ${pool.escape(info.usuario)},
+                                    fecha = ${pool.escape(info.fecha)},
+                                    hora = ${pool.escape(info.hora)}
+                                    where mes = ${pool.escape(info.mes)} and establecimiento = ${pool.escape(info.establecimiento)} and
+                                    input = ${pool.escape(parseInt(info.input))}`
+            await pool.query(sqlUpd)
+            return true
+        } else {
+            const sqlCodigo = `select cod from  input
+                                where id = ${pool.escape(info.input)} `
+            const [codigo] = await pool.query(sqlCodigo)
+            const dataInsert = {
+                valor: info.valor, fecha: info.fecha, hora: info.hora, gestion: info.gestion, mes: info.mes, cod: codigo[0].cod, variable: info.variable,
+                usuario: info.usuario, input: info.input, establecimiento: info.establecimiento, indicador: info.indicador,
             }
+            await pool.query('INSERT INTO valor SET  ?', dataInsert)
+            return true
+        }
 
-            // }
-        })
-        // })
-        return true
     }
 
 }

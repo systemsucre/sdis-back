@@ -20,7 +20,7 @@ rutas.get("/registrarme", registrarme, async (req, res) => {
     console.log('datos: ', req.query)
 
     const { username, otros, hospital, nombre, ape1,
-        ape2, celular, direccion, correo, creado } = req.query
+        ape2, celular, correo, creado } = req.query
     const datos = {
         username,
         pass: otros,
@@ -29,7 +29,6 @@ rutas.get("/registrarme", registrarme, async (req, res) => {
         apellido1:ape1,
         apellido2:ape2,
         celular,
-        direccion,
         correo,
         estado:0,
         creado,

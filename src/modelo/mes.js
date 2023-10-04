@@ -8,7 +8,7 @@ export class Mes {
 
     listarInicio = async (gestion) => {
         const sql =
-            `SELECT m.id, concat(m.mes," (",g.gestion,")") as mes ,m.estado, DATE_FORMAT(m.ini,"%Y-%m-%d %H:%m:%s") as ini,  DATE_FORMAT(m.fin,"%Y-%m-%d %H:%m:%s") as fin 
+            `SELECT m.id, concat(m.mes," (",g.gestion,")") as mes,  DATE_FORMAT(m.ini,"%Y-%m-%d %H:%m:%s") as ini,  DATE_FORMAT(m.fin,"%Y-%m-%d %H:%m:%s") as fin 
             FROM mes m
             inner join gestion g on g.id = m.gestion
             where m.eliminado =  false and g.gestion = ${pool.escape(gestion)} ORDER BY m.ini ASC`;
@@ -23,14 +23,14 @@ export class Mes {
 
     listarGestion = async () => {
         const sql =
-            `SELECT id, gestion as nombre FROM gestion where estado = 1 and eliminado = false ORDER BY id ASC `;
+            `SELECT id, gestion as nombre FROM gestion where  eliminado = false ORDER BY id ASC `;
         const [rows] = await pool.query(sql)
         return rows
     }
 
     listar = async (gestion) => {
         const sql =
-            `SELECT m.id, concat(m.mes," (",g.gestion,")") as mes ,m.estado, DATE_FORMAT(m.ini,"%Y-%m-%d %H:%m:%s") as ini,  DATE_FORMAT(m.fin,"%Y-%m-%d %H:%m:%s") as fin 
+            `SELECT m.id, concat(m.mes," (",g.gestion,")") as mes, DATE_FORMAT(m.ini,"%Y-%m-%d %H:%m:%s") as ini,  DATE_FORMAT(m.fin,"%Y-%m-%d %H:%m:%s") as fin 
             FROM mes m
             inner join gestion g on g.id = m.gestion
             where m.eliminado =  false and g.id = ${pool.escape(gestion)} ORDER BY m.ini ASC`;
@@ -63,7 +63,7 @@ export class Mes {
 
     buscar = async (dato) => {
         const sql =
-            `SELECT m.id, concat(m.mes," (",g.gestion,")") as mes ,m.estado, DATE_FORMAT(m.ini,"%Y-%m-%d %H:%m:%s") as ini, 
+            `SELECT m.id, concat(m.mes," (",g.gestion,")") as mes, DATE_FORMAT(m.ini,"%Y-%m-%d %H:%m:%s") as ini, 
              DATE_FORMAT(m.fin,"%Y-%m-%d %H:%m:%s") as fin 
             FROM mes m where m.mes like "${dato}%" and eliminado = false`;
         // console.log(sql)
@@ -88,27 +88,5 @@ export class Mes {
         await pool.query(sql);
 
         return await this.listar(gestion[0].id)
-
     }
-
-    activar = async (datos) => {
-        const sql_ = `select g.id from gestion g inner join mes m on g.id = m.gestion
-        WHERE m.id =  ${pool.escape(datos.id)}`;
-        let [gestion] = await pool.query(sql_)
-
-        const sql = `update mes set estado = true, modificado=${pool.escape(datos.modificado)}, usuario=${pool.escape(datos.usuario)}
-        WHERE id =  ${pool.escape(datos.id)}`;
-        await pool.query(sql)
-        return await this.listar(gestion[0].id)
-    }
-    desactivar = async (datos) => {
-        const sql_ = `select g.id from gestion g inner join mes m on g.id = m.gestion
-        WHERE m.id =  ${pool.escape(datos.id)}`;
-        let [gestion] = await pool.query(sql_)
-        const sql = `update mes set estado = false, modificado=${pool.escape(datos.modificado)}, usuario=${pool.escape(datos.usuario)}
-        WHERE id =  ${pool.escape(datos.id)}`;
-        await pool.query(sql)
-        return await this.listar(gestion[0].id)
-    }
-
 }

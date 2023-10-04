@@ -7,7 +7,7 @@ export const validaciones = (req, res, next) => {
     const error = validationResult(req)
     if (!error.isEmpty()) {
         console.log('no pasa validaciones', error, req.body)
-        return res.json({ msg: 'El servidor no puede interpretar los campos. Verifique que sus datos esten bien escritos', ok:false })
+        return res.json({ msg: 'campos Inválidos, Escriba correctamente los campos', ok:false })
     }
     return next()
 }

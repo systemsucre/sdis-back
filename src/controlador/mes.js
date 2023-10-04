@@ -39,36 +39,6 @@ rutas.post("/listar", id, async (req, res) => {
 })
 
 
-rutas.post("/activar", id, async (req, res) => {
-    try {
-        const { id, modificado, usuario } = req.body;
-        const datos = { id, modificado, usuario }
-        const resultado = await mes.activar(datos)
-        if (resultado.affectedRows === 0)
-            return res.json({ msg: "No existe el registro", ok: false });
-        return res.json({ ok: true, data: resultado, msg: 'Mes activado' })
-    } catch (error) {
-        console.log(error)
-        return res.json({ ok: false, msg: 'Error en el servidor' })
-    }
-})
-
-
-rutas.post("/desactivar", id, async (req, res) => {
-    try {
-        const { id, modificado, usuario } = req.body;
-        const datos = { id, modificado, usuario }
-        const resultado = await mes.desactivar(datos)
-        if (resultado.affectedRows === 0)
-            return res.json({ msg: "No existe el registro", ok: false });
-        return res.json({ ok: true, data: resultado, msg: 'Mes desactivado' })
-    } catch (error) {
-        console.log(error)
-        return res.json({ ok: false, msg: 'Error en el servidor' })
-    }
-})
-
-
 
 rutas.post("/buscar", buscar, async (req, res) => {
     // console.log(req.body.dato)
@@ -85,37 +55,6 @@ rutas.post("/buscar", buscar, async (req, res) => {
 })
 
 
-rutas.post("/insertar", insertar, async (req, res) => {
-
-    // console.log(req.body)
-    const { nombre, nit, telefono, direccion, ciudad, creado, usuario } = req.body
-    const datos = {
-        nombre,
-        nit,
-        telefono,
-        direccion,
-        ciudad,
-        creado,
-        usuario
-    }
-    try {
-
-        await mes.insertar(datos).then(j => {
-            if (j.existe === 1) {
-                return res.json({ ok: false, msg: 'Este nit ' + nit + ' ya esta registrado' })
-            } if (j.existe === 2) {
-                return res.json({ ok: false, msg: 'Este mes ya esta registrado' })
-            }
-            return res.json({ data: j, ok: true, msg: 'Registro exitoso' })
-
-        })
-
-
-    } catch (error) {
-        console.log(error)
-        return res.json({ msg: 'Error en el servidor', ok: false })
-    }
-})
 
 
 

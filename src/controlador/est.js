@@ -1,6 +1,6 @@
 import { Router } from "express"
 import { Est } from "../modelo/est.js"
-import { insertar, editar, eliminar, buscar, siguiente, anterior } from '../validacion/est.js'
+import { insertar, editar, eliminar, buscar, listar, siguiente, anterior } from '../validacion/est.js'
 
 //const modelo from "../modelo/usuario.js"
 // desde esta plantilla se importa las funcionalidades de los controladores de los modulos
@@ -9,10 +9,10 @@ import { insertar, editar, eliminar, buscar, siguiente, anterior } from '../vali
 const rutas = Router()
 const est = new Est()
 
-rutas.post("/listar", async (req, res) => {
-    // console.log(req.body)
+rutas.post("/listar", listar, async (req, res) => {
+    // console.log(req)
     try {
-        const resultado = await est.listar()
+        const resultado = await est.listar(req.body.cantidad)
         return res.json({ data: resultado, ok: true })
     } catch (error) {
         console.log(error)
@@ -35,8 +35,9 @@ rutas.post("/listarMunic", async (req, res) => {
 rutas.post("/next", siguiente, async (req, res) => {
 
     let id = req.body.id
+    let cantidad = req.body.cantidad
     try {
-        const resultado = await est.listarSiguiente(id)
+        const resultado = await est.listarSiguiente(id, cantidad)
         if (resultado.length > 0)
             return res.json({ ok: true, data: resultado })
         else
@@ -50,8 +51,10 @@ rutas.post("/next", siguiente, async (req, res) => {
 
 rutas.post("/anterior", anterior, async (req, res) => {
     let id = req.body.id
+    let cantidad = req.body.cantidad
+
     try {
-        const resultado = await est.listarAnterior(id)
+        const resultado = await est.listarAnterior(id, cantidad)
         if (resultado.length > 0)
             return res.json({ ok: true, data: resultado })
         else
@@ -84,17 +87,17 @@ rutas.post("/buscar", buscar, async (req, res) => {
 rutas.post("/insertar", insertar, async (req, res) => {
 
 
-    const { esta, nivel, municipio, creado, usuario } = req.body
+    const { esta, cantidad, municipio, creado, usuario } = req.body
     const datos = {
         establecimiento: esta,
-        rol:nivel,
         municipio,
         creado,
-        usuario
+        usuario,
+
     }
     try {
 
-        const resultado = await est.insertar(datos)
+        const resultado = await est.insertar(datos, cantidad)
         if (resultado.existe === 1) {
             return res.json({ ok: false, msg: 'ya existe el registro' })
         }
@@ -109,18 +112,17 @@ rutas.post("/insertar", insertar, async (req, res) => {
 
 
 rutas.post("/actualizar", editar, async (req, res) => {
-
-    const { id, esta, nivel, municipio, modificado, usuario } = req.body
+    const { id, esta, cantidad, municipio,estado, modificado, usuario } = req.body
     const datos = {
-        id:id,
+        id: id,
         establecimiento: esta,
-        nivel,
         municipio,
         modificado,
-        usuario
+        usuario,
+        cantidad, estado
     }
     try {
-        const resultado = await est.actualizar(datos)
+        const resultado = await est.actualizar(datos, cantidad)
         if (resultado.existe === 1) {
             return res.json({ msg: 'ya existe el registro', ok: false })
         }
@@ -139,8 +141,9 @@ rutas.post("/actualizar", editar, async (req, res) => {
 rutas.post("/eliminar", eliminar, async (req, res) => {
     // console.log(req.body)
     try {
+        let cantidad = req.body.cantidad
         const id = req.body.id;
-        const resultado = await est.eliminar(id)
+        const resultado = await est.eliminar(id, cantidad, req.body.modificado)
         return res.json({ ok: true, data: resultado, msg: 'El registro se ha eliminado' })
     } catch (error) {
         console.log(error)

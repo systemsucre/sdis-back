@@ -2,12 +2,11 @@ import { check } from "express-validator"
 import { validaciones } from "./headers.js"
 
 export const insertar = [
-
+    check('cantidad')
+        .isLength({ min: 1 })
+        .exists().isNumeric(),
     check('esta')
-        .matches(/^[()/a-zA-Z.@ Ññ0-9_-]{1,100}$/)
-        .exists(),
-    check('nivel')
-        .matches(/^\d{1,10}$/)
+        .matches(/^\w{1,100}\s?[()/a-zA-Z.@, Ññ0-9_-]{1,100}?$/)
         .exists(),
     check('municipio')
         .matches(/^\d{1,10}$/)
@@ -25,11 +24,14 @@ export const editar = [
     check('id')
         .isLength({ min: 1 })
         .exists().isNumeric(),
-        check('esta')
-        .matches(/^[()/a-zA-Z.@ Ññ0-9_-]{1,100}$/)
-        .exists(),
-    check('nivel')
-        .matches(/^\d{1,10}$/)
+    check('estado')
+        .isLength({ min: 1 })
+        .exists().isNumeric(),
+    check('cantidad')
+        .isLength({ min: 1 })
+        .exists().isNumeric(),
+    check('esta')
+        .matches(/^\w{1,100}\s?[()/a-zA-Z.@, Ññ0-9_-]{1,100}?$/)
         .exists(),
     check('municipio')
         .matches(/^\d{1,10}$/)
@@ -45,6 +47,12 @@ export const editar = [
 
 export const eliminar = [
     check('id').isLength({ min: 1 }).exists().isNumeric(),
+    check('cantidad')
+        .isLength({ min: 1 })
+        .exists().isNumeric(),
+    check('modificado')
+        .exists()
+        .matches(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/),
 
     (req, res, next) => {
         validaciones(req, res, next)
@@ -52,7 +60,9 @@ export const eliminar = [
 ]
 export const siguiente = [
     check('id').isLength({ min: 1 }).exists().isNumeric(),
-
+    check('cantidad')
+        .isLength({ min: 1 })
+        .exists().isNumeric(),
     (req, res, next) => {
         validaciones(req, res, next)
     }
@@ -60,7 +70,18 @@ export const siguiente = [
 
 export const anterior = [
     check('id').isLength({ min: 1 }).exists().isNumeric(),
+    check('cantidad')
+        .isLength({ min: 1 })
+        .exists().isNumeric(),
+    (req, res, next) => {
+        validaciones(req, res, next)
+    }
+]
 
+export const listar = [
+    check('cantidad')
+        .isLength({ min: 1 })
+        .exists().isNumeric(),
     (req, res, next) => {
         validaciones(req, res, next)
     }

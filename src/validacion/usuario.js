@@ -2,9 +2,12 @@ import { check } from "express-validator"
 import { validaciones } from "./headers.js"
 
 export const insertar = [
+    check('cantidad')
+        .isLength({ min: 1 })
+        .exists().isNumeric(),
 
     check('username')
-        .matches(/^[a-zA-ZÑñ ]{2,30}$/)
+        .matches(/^[a-zA-ZÑñ]{2,16}$/)
         .exists(),
     check('otros')
         .matches(/^.{4,3000}$/)
@@ -22,17 +25,11 @@ export const insertar = [
         .matches(/^[a-zA-ZÑñ ]{2,30}$/)
         .exists(),
     check('ape2')
-        .matches(/^[a-zA-ZÑñ ]{2,30}$/)
-        .exists(),
+        .matches(/^[a-zA-ZÑñ ]{2,30}$/),
     check('celular')
-        .exists()
         .matches(/^\d{5,10}$/),
     check('correo')
-        .matches(/^\w+([.-_+]?\w+)*@\w+([.-]?\w+)*(\.\w{2,10})+$/)
-        .exists(),
-    check('direccion')
-        .matches(/^[()/a-zA-Z.@ Ññ0-9_-]{1,100}$/)
-        .exists(),
+        .matches(/^\w+([.-_+]?\w+)*@\w+([.-]?\w+)*(\.\w{2,10})+$/),
     check('creado')
         .exists()
         .matches(/^\d{4}-\d{2}-\d{2} \d{1,2}:\d{2}:\d{2}$/),
@@ -43,6 +40,42 @@ export const insertar = [
 ]
 
 export const actualizar = [
+    check('id')
+        .matches(/^\d{1,10}$/)
+        .exists(),
+    check('estado')
+        .matches(/^\d{1,10}$/)
+        .exists(),
+    check('rol_')
+        .matches(/^\d{1,10}$/)
+        .exists(),
+    check('hospital')
+        .matches(/^\d{1,10}$/)
+        .exists(),
+    check('nombre')
+        .matches(/^[a-zA-ZÑñ ]{2,30}$/)
+        .exists(),
+    check('ape1')
+        .matches(/^[a-zA-ZÑñ ]{2,30}$/)
+        .exists(),
+    check('ape2')
+        .matches(/^[a-zA-ZÑñ ]{2,30}$/),
+    check('celular')
+        .matches(/^\d{5,10}$/),
+    check('correo')
+        .matches(/^\w+([.-_+]?\w+)*@\w+([.-]?\w+)*(\.\w{2,10})+$/),
+
+    check('modificado')
+        .exists()
+        .matches(/^\d{4}-\d{2}-\d{2} \d{1,2}:\d{2}:\d{2}$/),
+
+    (req, res, next) => {
+        validaciones(req, res, next)
+    }
+]
+
+
+export const validar = [
     check('id')
         .matches(/^\d{1,10}$/)
         .exists(),
@@ -59,17 +92,14 @@ export const actualizar = [
         .matches(/^[a-zA-ZÑñ ]{2,30}$/)
         .exists(),
     check('ape2')
-        .matches(/^[a-zA-ZÑñ ]{2,30}$/)
-        .exists(),
+        .matches(/^[a-zA-ZÑñ ]{2,30}$/),
     check('celular')
-        .exists()
         .matches(/^\d{5,10}$/),
     check('correo')
-        .matches(/^\w+([.-_+]?\w+)*@\w+([.-]?\w+)*(\.\w{2,10})+$/)
-        .exists(),
-    check('direccion')
-        .matches(/^[()/a-zA-Z.@ Ññ0-9_-]{1,100}$/)
-        .exists(),
+        .matches(/^\w+([.-_+]?\w+)*@\w+([.-]?\w+)*(\.\w{2,10})+$/),
+    check('cantidad')
+        .isLength({ min: 1 })
+        .exists().isNumeric(),
     check('modificado')
         .exists()
         .matches(/^\d{4}-\d{2}-\d{2} \d{1,2}:\d{2}:\d{2}$/),
@@ -78,10 +108,11 @@ export const actualizar = [
         validaciones(req, res, next)
     }
 ]
+
 export const registrarme = [
 
     check('username')
-        .matches(/^[a-zA-ZÑñ ]{2,30}$/)
+        .matches(/^[a-zA-ZÑñ ]{2,16}$/)
         .exists(),
     check('otros')
         .matches(/^.{4,3000}$/)
@@ -96,17 +127,11 @@ export const registrarme = [
         .matches(/^[a-zA-ZÑñ ]{2,30}$/)
         .exists(),
     check('ape2')
-        .matches(/^[a-zA-ZÑñ ]{2,30}$/)
-        .exists(),
+        .matches(/^[a-zA-ZÑñ ]{2,30}$/),
     check('celular')
-        .exists()
         .matches(/^\d{5,10}$/),
     check('correo')
-        .matches(/^\w+([.-_+]?\w+)*@\w+([.-]?\w+)*(\.\w{2,10})+$/)
-        .exists(),
-    check('direccion')
-        .matches(/^[()/a-zA-Z.@ Ññ0-9_-]{1,100}$/)
-        .exists(),
+        .matches(/^\w+([.-_+]?\w+)*@\w+([.-]?\w+)*(\.\w{2,10})+$/),
     check('creado')
         .exists()
         .matches(/^\d{4}-\d{2}-\d{2} \d{1,2}:\d{2}:\d{2}$/),
@@ -142,17 +167,11 @@ export const actualizarMiPerfil = [
         .matches(/^[a-zA-ZÑñ ]{2,30}$/)
         .exists(),
     check('ape2')
-        .matches(/^[a-zA-ZÑñ ]{2,30}$/)
-        .exists(),
+        .matches(/^[a-zA-ZÑñ ]{2,30}$/),
     check('celular')
-        .exists()
         .matches(/^\d{5,10}$/),
     check('correo')
-        .matches(/^\w+([.-_+]?\w+)*@\w+([.-]?\w+)*(\.\w{2,10})+$/)
-        .exists(),
-    check('direccion')
-        .matches(/^[()/a-zA-Z.@ Ññ0-9_-]{1,100}$/)
-        .exists(),
+        .matches(/^\w+([.-_+]?\w+)*@\w+([.-]?\w+)*(\.\w{2,10})+$/),
     check('modificado')
         .exists()
         .matches(/^\d{4}-\d{2}-\d{2} \d{1,2}:\d{2}:\d{2}$/),
@@ -185,16 +204,7 @@ export const cambiarMiContraseña = [
 ]
 
 
-export const eliminar = [
-    check('id').exists().matches(/^\d{1,10}$/),
-    check('modificado')
-        .exists()
-        .matches(/^\d{4}-\d{2}-\d{2} \d{1,2}:\d{2}:\d{2}$/),
 
-    (req, res, next) => {
-        validaciones(req, res, next)
-    }
-]
 
 export const buscar = [
     check('dato').matches(/^[()/a-zA-Z.@ Ññ0-9_-]{1,400}$/).exists(),
@@ -204,6 +214,9 @@ export const buscar = [
 ]
 
 export const siguiente = [
+    check('cantidad')
+        .isLength({ min: 1 })
+        .exists().isNumeric(),
     check('id').isLength({ min: 1 }).exists().isNumeric(),
 
     (req, res, next) => {
@@ -212,6 +225,9 @@ export const siguiente = [
 ]
 
 export const anterior = [
+    check('cantidad')
+        .isLength({ min: 1 })
+        .exists().isNumeric(),
     check('id').isLength({ min: 1 }).exists().isNumeric(),
 
     (req, res, next) => {

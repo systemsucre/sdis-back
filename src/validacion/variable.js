@@ -5,7 +5,7 @@ import { validaciones } from "./headers.js"
 export const insertar = [
 
     check('variable1')
-        .matches(/^[()/a-zA-Z.@ Ññ0-9_-áéíóúÁÉÍÓÚ<>-]{1,500}$/)
+        .matches(/^[()/a-zA-Z.@ Ññ0-9_-áéíóúÁÉÍÓÚ<>,-]{1,500}$/)
         .exists(),
     check('gestion')
         .matches(/^\d{1,10}$/)
@@ -28,7 +28,7 @@ export const editar = [
     check('id').isLength({ min: 1 }).exists().isNumeric(),
 
     check('variable1')
-        .matches(/^[()/a-zA-Z.@ Ññ0-9_-áéíóúÁÉÍÓÚ<>-]{1,500}$/)
+        .matches(/^[()/a-zA-Z.@ Ññ0-9_-áéíóúÁÉÍÓÚ<>,-]{1,500}$/)
         .exists(),
     check('gestion')
         .matches(/^\d{1,10}$/)
@@ -107,7 +107,15 @@ export const insertarFila = [
         .matches(/^\d{1,10}$/)
         .exists(),
     check('indicador')
-        .matches(/^[()/a-zA-Z.@ Ññ0-9_-áéíóúÁÉÍÓÚ<>-]{1,500}$/)
+        .matches(/^[()/a-zA-Z.@ Ññ0-9_-áéíóúÁÉÍÓÚ<>,-]{1,500}$/)
+        .exists(),
+    check('ini')
+        .exists()
+        .matches(/\d{4}[-]\d{2}[-]\d{2}/)
+        .exists(),
+    check('fin')
+        .exists()
+        .matches(/\d{4}[-]\d{2}[-]\d{2}/)
         .exists(),
     check('creado')
         .exists()
@@ -127,8 +135,16 @@ export const editarFila = [
     check('variable1')
         .matches(/^\d{1,10}$/)
         .exists(),
+    check('ini')
+        .exists()
+        .matches(/\d{4}[-]\d{2}[-]\d{2}/)
+        .exists(),
+    check('fin')
+        .exists()
+        .matches(/\d{4}[-]\d{2}[-]\d{2}/)
+        .exists(),
     check('indicador')
-        .matches(/^[()/a-zA-Z.@ Ññ0-9_-áéíóúÁÉÍÓÚ<>-]{1,500}$/)
+        .matches(/^[()/a-zA-Z.@ Ññ0-9_-áéíóúÁÉÍÓÚ<>,-]{1,500}$/)
         .exists(),
     check('modificado')
         .exists()
@@ -168,12 +184,22 @@ export const eliminarFila = [
 
 export const insertarInput = [
 
-
     check('input')
-        .matches(/^[()/a-zA-Z.@ Ññ0-9_-áéíóúÁÉÍÓÚ<>-]{1,500}$/)
+        .matches(/^[()/a-zA-Z.@ Ññ0-9_-áéíóúÁÉÍÓÚ<>,-]{1,500}$/)
         .exists(),
     check('variable_')
         .matches(/^\d{1,10}$/)
+        .exists(),
+    check('ini')
+        .exists()
+        .matches(/\d{4}[-]\d{2}[-]\d{2}/)
+        .exists(),
+    check('gestion')
+        .matches(/^\d{1,10}$/)
+        .exists(),
+    check('fin')
+        .exists()
+        .matches(/\d{4}[-]\d{2}[-]\d{2}/)
         .exists(),
     check('creado')
         .exists()
@@ -193,6 +219,14 @@ export const añadirInput = [
     check('variable_')
         .matches(/^\d{1,10}$/)
         .exists(),
+    check('ini')
+        .exists()
+        .matches(/\d{4}[-]\d{2}[-]\d{2}/)
+        .exists(),
+    check('fin')
+        .exists()
+        .matches(/\d{4}[-]\d{2}[-]\d{2}/)
+        .exists(),
     check('creado')
         .exists()
         .matches(/^\d{4}-\d{2}-\d{2} \d{1,2}:\d{2}:\d{2}$/),
@@ -207,14 +241,22 @@ export const añadirInput = [
 
 export const editarInput = [
 
-    check('idinput')
-        .matches(/^\d{1,10}$/)
-        .exists(),
+    // check('idinput')
+    //     .matches(/^[0-9'']{1,10}$/)
+    //     .exists(),
     check('id')
         .matches(/^\d{1,10}$/)
         .exists(),
     check('input')
-        .matches(/^[()/a-zA-Z.@ Ññ0-9_-áéíóúÁÉÍÓÚ<>-]{1,500}$/)
+        .matches(/^[()/a-zA-Z.@ Ññ0-9_-áéíóúÁÉÍÓÚ<>,-]{1,500}$/)
+        .exists(),
+    check('ini')
+        .exists()
+        .matches(/\d{4}[-]\d{2}[-]\d{2}/)
+        .exists(),
+    check('fin')
+        .exists()
+        .matches(/\d{4}[-]\d{2}[-]\d{2}/)
         .exists(),
     check('modificado')
         .exists()
@@ -232,7 +274,16 @@ export const eliminarInput = [
         .exists()
         .matches(/^\d{4}-\d{2}-\d{2} \d{1,2}:\d{2}:\d{2}$/),
     check('codigo')
-        .matches(/^[()/a-zA-Z.@ Ññ0-9_-áéíóúÁÉÍÓÚ<>-]{1,500}$/)
+        .matches(/^[()/a-zA-Z.@ Ññ0-9_-áéíóúÁÉÍÓÚ<>,-]{1,500}$/)
+        .exists(),
+    check('gestion')
+        .matches(/^\d{1,10}$/)
+        .exists(),
+    check('idinput')
+        .exists()
+        .isLength({ min: 1 }).isNumeric(),
+    check('variable_')
+        .matches(/^\d{1,10}$/)
         .exists(),
     check('usuario')
         .exists()
@@ -264,13 +315,27 @@ export const insertarOtroInput = [
     check('idinput')
         .matches(/^\d{1,10}$/)
         .exists(),
+    check('gestion')
+        .matches(/^\d{1,10}$/)
+        .exists(),
+    check('ini')
+        .exists()
+        .matches(/\d{4}[-]\d{2}[-]\d{2}/)
+        .exists(),
+    check('fin')
+        .exists()
+        .matches(/\d{4}[-]\d{2}[-]\d{2}/)
+        .exists(),
     check('input')
-        .matches(/^[()/a-zA-Z.@ Ññ0-9_-áéíóúÁÉÍÓÚ<>-]{1,500}$/)
+        .matches(/^[()/a-zA-Z.@ Ññ0-9_-áéíóúÁÉÍÓÚ<>,-]{1,500}$/)
         .exists(),
     check('codigo')
-        .matches(/^[()/a-zA-Z.@ Ññ0-9_-áéíóúÁÉÍÓÚ<>-]{1,500}$/)
+        .matches(/^[()/a-zA-Z.@ Ññ0-9_-áéíóúÁÉÍÓÚ<>,-]{1,500}$/)
         .exists(),
     check('variable_')
+        .matches(/^\d{1,10}$/)
+        .exists(),
+    check('estado')
         .matches(/^\d{1,10}$/)
         .exists(),
     check('creado')

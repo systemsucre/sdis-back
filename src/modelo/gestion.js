@@ -7,15 +7,14 @@ export class Gestion {
 
     listar = async () => {
         const sql =
-            `SELECT g.id, g.gestion, g.estado, count(m.id) as meses FROM gestion g
-            left join mes m on g.id = m.gestion
+            `SELECT g.id, g.gestion, g.estado FROM gestion g 
             where g.eliminado = false GROUP by g.id;`;
         const [rows] = await pool.query(sql)
         const sql_ =
             `SELECT count(id) as cantidad FROM gestion where eliminado = false`;
         const [rows_] = await pool.query(sql_)
-        return [rows, rows_[0].cantidad]
-    }
+        return [rows, rows_[0].cantidad] 
+    } 
 
 
 
@@ -86,18 +85,18 @@ export class Gestion {
             return await this.listar()
         } else {
             let meses = [
-            { mes: 'ENERO', ini: gestion + '-01-01 19:08:38', fin: gestion + '-01-10 19:08:38', modificado: datos.modificado, usuario: datos.usuario, gestion: datos.id },
-            { mes: 'FEBRERO', ini: gestion + '-02-01 19:08:38', fin: gestion + '-02-10 19:08:38', modificado: datos.modificado, usuario: datos.usuario, gestion: datos.id },
-            { mes: 'MARZO', ini: gestion + '-03-01 19:08:38', fin: gestion + '-03-10 19:08:38', modificado: datos.modificado, usuario: datos.usuario, gestion: datos.id },
-            { mes: 'ABRIL', ini: gestion + '-04-01 19:08:38', fin: gestion + '-04-10 19:08:38', modificado: datos.modificado, usuario: datos.usuario, gestion: datos.id },
-            { mes: 'MAYO', ini: gestion + '-05-01 19:08:38', fin: gestion + '-05-10 19:08:38', modificado: datos.modificado, usuario: datos.usuario, gestion: datos.id },
-            { mes: 'JUNIO', ini: gestion + '-06-01 19:08:38', fin: gestion + '-06-10 19:08:38', modificado: datos.modificado, usuario: datos.usuario, gestion: datos.id },
-            { mes: 'JULIO', ini: gestion + '-07-01 19:08:38', fin: gestion + '-07-10 19:08:38', modificado: datos.modificado, usuario: datos.usuario, gestion: datos.id },
-            { mes: 'AGOSTO', ini: gestion + '-08-01 19:08:38', fin: gestion + '-08-10 19:08:38', modificado: datos.modificado, usuario: datos.usuario, gestion: datos.id },
-            { mes: 'SEPTIEMBRE', ini: gestion + '-09-01 19:08:38', fin: gestion + '-09-10 19:08:38', modificado: datos.modificado, usuario: datos.usuario, gestion: datos.id },
-            { mes: 'OCTUBRE', ini: gestion + '-10-01 19:08:38', fin: gestion + '-10-10 19:08:38', modificado: datos.modificado, usuario: datos.usuario, gestion: datos.id },
-            { mes: 'NOVIEMBRE', ini: gestion + '-11-01 19:08:38', fin: gestion + '-11-10 19:08:38', modificado: datos.modificado, usuario: datos.usuario, gestion: datos.id },
-            { mes: 'DICIEMBRE', ini: gestion + '-12-01 19:08:38', fin: gestion + '-12-10 19:08:38', modificado: datos.modificado, usuario: datos.usuario, gestion: datos.id }]
+            {num:1, mes: 'ENERO', ini: gestion + '-01-01 19:08:38', fin: gestion + '-01-10 19:08:38', modificado: datos.modificado, usuario: datos.usuario, gestion: datos.id },
+            {num:2, mes: 'FEBRERO', ini: gestion + '-02-01 19:08:38', fin: gestion + '-02-10 19:08:38', modificado: datos.modificado, usuario: datos.usuario, gestion: datos.id },
+            {num:3, mes: 'MARZO', ini: gestion + '-03-01 19:08:38', fin: gestion + '-03-10 19:08:38', modificado: datos.modificado, usuario: datos.usuario, gestion: datos.id },
+            {num:4, mes: 'ABRIL', ini: gestion + '-04-01 19:08:38', fin: gestion + '-04-10 19:08:38', modificado: datos.modificado, usuario: datos.usuario, gestion: datos.id },
+            {num:5, mes: 'MAYO', ini: gestion + '-05-01 19:08:38', fin: gestion + '-05-10 19:08:38', modificado: datos.modificado, usuario: datos.usuario, gestion: datos.id },
+            {num:6, mes: 'JUNIO', ini: gestion + '-06-01 19:08:38', fin: gestion + '-06-10 19:08:38', modificado: datos.modificado, usuario: datos.usuario, gestion: datos.id },
+            {num:7, mes: 'JULIO', ini: gestion + '-07-01 19:08:38', fin: gestion + '-07-10 19:08:38', modificado: datos.modificado, usuario: datos.usuario, gestion: datos.id },
+            {num:8, mes: 'AGOSTO', ini: gestion + '-08-01 19:08:38', fin: gestion + '-08-10 19:08:38', modificado: datos.modificado, usuario: datos.usuario, gestion: datos.id },
+            {num:9, mes: 'SEPTIEMBRE', ini: gestion + '-09-01 19:08:38', fin: gestion + '-09-10 19:08:38', modificado: datos.modificado, usuario: datos.usuario, gestion: datos.id },
+            {num:10, mes: 'OCTUBRE', ini: gestion + '-10-01 19:08:38', fin: gestion + '-10-10 19:08:38', modificado: datos.modificado, usuario: datos.usuario, gestion: datos.id },
+            {num:11, mes: 'NOVIEMBRE', ini: gestion + '-11-01 19:08:38', fin: gestion + '-11-10 19:08:38', modificado: datos.modificado, usuario: datos.usuario, gestion: datos.id },
+            {num:12, mes: 'DICIEMBRE', ini: gestion + '-12-01 19:08:38', fin: gestion + '-12-10 19:08:38', modificado: datos.modificado, usuario: datos.usuario, gestion: datos.id }]
 
             meses.forEach(async e=>{
                 await pool.query("INSERT INTO mes SET  ?", e)

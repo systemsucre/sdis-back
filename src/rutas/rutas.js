@@ -13,6 +13,7 @@ import miPerfil from '../controlador/miPerfil.js'
 import mes from '../controlador/mes.js'
 import variable from '../controlador/variable.js'
 import registro from '../controlador/registro.js'
+import reportes5 from '../controlador/reportes5.js'
 
 
 
@@ -43,7 +44,7 @@ rutas.get('/', async (req, res) => {
         inner join establecimiento e on e.id = p.establecimiento
         inner join municipio m on m.id = e.municipio
         inner join red re on re.id = m.red
-        where p.username = ${pool.escape(req.query.intel)} and p.pass = ${pool.escape(req.query.viva)} and p.estado = 1 and p.eliminado = 0 `;
+        where p.username = ${pool.escape(req.query.intel)} and p.pass = ${pool.escape(req.query.viva)} and p.estado = 1 and p.eliminado = 0 and e.eliminado = 0 `;
         const [result] = await pool.query(sql)
 
         if (result.length === 1) {
@@ -121,7 +122,7 @@ rutas.post('/logout', (req, res) => {
 rutas.get('/listarestablecimiento', async (req, res) => {
     try {
         const sql =
-            `SELECT id, establecimiento as nombre FROM establecimiento where eliminado = false`;
+            `SELECT id, establecimiento as nombre FROM establecimiento where eliminado = false order by establecimiento asc`;
         const [rows] = await pool.query(sql)
         return res.json(rows)
     } catch (error) {
@@ -270,16 +271,16 @@ verificacion.use((req, res, next) => {
                     next()
                 }
                 else {
-                    return res.json({ ok: false, msg: 'El Servidor no puede identificar su autencidad en la base de datos, cierre sesion y vuelva a intentar' })
+                    return res.json({ ok: false, sesion: false, msg: 'El Servidor no puede identificar su autencidad, cierre sesion y vuelva a intentar' })
                 }
             })
         }
         else {
-            return res.json({ ok: false, msg: 'El Servidor no puede interpretar su autenticidad' })
+            return res.json({ ok: false, sesion: false, msg: 'El Servidor no puede interpretar su autenticidad' })
         }
     } catch (error) {
         console.log(error)
-        return res.json({ ok: false, msg: 'Error en el servidor' })
+        return res.json({ ok: false, sesion: false, msg: 'Error en el servidor' })
     }
 })
 
@@ -291,12 +292,35 @@ const rolesAdmin = (req, res, next) => {
 }
 
 const rolesAdminSEDES = (req, res, next) => {
-    if (parseInt(req.body.rol === 2) || parseInt(req.body.rol) === 1) {
+    // console.log(req.body.rol)
+    if (parseInt(req.body.rol) === 2 || parseInt(req.body.rol) === 1) {
         next()
     } else return res.json({ ok: false, msg: 'Esta Funcionalidad no esta destinado para su rol' })
 }
 
+const rolesRegistro = (req, res, next) => {
+    // console.log(req.body.rol)
+    if (parseInt(req.body.rol > 2) || parseInt(req.body.rol) < 6) {
+        next()
+    } else return res.json({ ok: false, msg: 'Esta Funcionalidad no esta destinado para su rol' })
+}
 
+const rolesSedes = (req, res, next) => {
+    if (parseInt(req.body.rol) === 2) {
+        next()
+    } else return res.json({ ok: false, msg: 'Esta Funcionalidad no esta destinado para su rol' })
+}
+const rolesRed = (req, res, next) => {
+    if (parseInt(req.body.rol) === 3) {
+        next()
+    } else return res.json({ ok: false, msg: 'Esta Funcionalidad no esta destinado para su rol' })
+}
+
+const rolesMun = (req, res, next) => {
+    if (parseInt(req.body.rol) === 4) {
+        next()
+    } else return res.json({ ok: false, msg: 'Esta Funcionalidad no esta destinado para su rol' })
+}
 const rolesEst = (req, res, next) => {
     if (parseInt(req.body.rol) === 5) {
         next()
@@ -304,21 +328,25 @@ const rolesEst = (req, res, next) => {
 }
 
 
-rutas.use('/public', rutasPublicas)
 rutas.use("/usuarios", verificacion, rolesAdmin, usuario)
-rutas.use("/miPerfil", verificacion, miPerfil)
 rutas.use("/est", verificacion, rolesAdmin, est)
 rutas.use("/gestion", verificacion, rolesAdmin, gestion)
 rutas.use("/variable", verificacion, rolesAdmin, variable)
 
 rutas.use("/mes", verificacion, rolesAdminSEDES, mes)
 
+rutas.use("/reportes2", verificacion, rolesSedes, reportes5)
+rutas.use("/reportes3", verificacion, rolesRed, reportes5)
+rutas.use("/reportes4", verificacion, rolesMun, reportes5)
 
 
 
-rutas.use("/registro", verificacion, registro) 
+rutas.use("/registro", verificacion, rolesRegistro, registro)
+rutas.use("/reportes5", verificacion, rolesEst, reportes5)
 
 
+rutas.use("/miPerfil", verificacion, miPerfil)
+rutas.use('/public', rutasPublicas)
 
 
 
