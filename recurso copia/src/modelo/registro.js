@@ -59,7 +59,7 @@ export class Registro {
 
         const [rows2] = await pool.query(sql2)
 
-        // console.log(rows1, rows2)
+        console.log(rows1, rows2)
         return [rows1, rows2]
     }
 
@@ -88,7 +88,7 @@ export class Registro {
                             where tope = 1 and indicador_ = ${pool.escape(datos.id)} 
                             order by ordengen asc`
             const [tope] = await pool.query(sqltope)
-            // console.log(tope, 'lista de datos obtenidos, probando atribute')
+            console.log(tope, 'lista de datos obtenidos, probando atribute')
             await tope.forEach(async e => {
                 const dataInsert = {
                     valor: 0, fecha: datos.fecha, hora: datos.hora, gestion: datos.gestion, mes: datos.mes, cod: e.cod, variable: datos.variable,
@@ -154,7 +154,7 @@ export class Registro {
         where mes = ${pool.escape(info.mes)} and 
         establecimiento = ${pool.escape(info.establecimiento)} and input = ${pool.escape(parseInt(info.input))}`
         const [lista] = await pool.query(sqlExiste)
-        // console.log(lista, 'lista', info,'valores a enviar')
+        console.log(lista)
         if (lista.length > 0) {
             const sqlUpd = `update valor set 
                                     valor = ${pool.escape(parseInt(info.valor))},
@@ -166,7 +166,7 @@ export class Registro {
             await pool.query(sqlUpd)
             return true
         } else {
-            const sqlCodigo = `select cod from  input 
+            const sqlCodigo = `select cod from  input
                                 where id = ${pool.escape(info.input)} `
             const [codigo] = await pool.query(sqlCodigo)
             const dataInsert = {

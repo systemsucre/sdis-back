@@ -44,7 +44,7 @@ export class Est {
 
     actualizar = async (datos) => {
         const sqlExists =
-            `SELECT * FROM establecimiento WHERE establecimiento = ${pool.escape(datos.establecimiento)} and id !=${pool.escape(datos.id)}`;
+            `SELECT * FROM establecimiento WHERE establecimiento = ${pool.escape(datos.establecimiento)} and id !=${pool.escape(datos.id)} and eliminado = 0 `;
         const [result] = await pool.query(sqlExists)
         if (result.length === 0) {
 

@@ -38,9 +38,9 @@ rutas.post("/listarvariable", id, async (req, res) => {
     }
 })
 
-rutas.post("/listarindicadores", async (req, res) => {
+rutas.post("/listarindicadores", async (req, res) => { 
     try {
-        const { variable, fecha, sest, mes } = req.body
+        const { variable,fecha, sest, mes } = req.body
         const datos = { variable, fecha, sest, mes }
         const resultado = await registro.listarIndicadores(datos)
         // console.log(resultado, resultado.length)
@@ -56,7 +56,7 @@ rutas.post("/listarindicadores", async (req, res) => {
 
 
 rutas.post("/valoresinput", async (req, res) => {
-    const { usuario, sest, gestion, mes, variable, fecha, hora, id, } = req.body
+    const { usuario, sest, gestion, mes, variable,  fecha, hora , id,} = req.body
     const data = {
         usuario,
         establecimiento: sest,
@@ -69,7 +69,7 @@ rutas.post("/valoresinput", async (req, res) => {
     }
 
     try {
-        const resultado = await registro.listarValoresInput(data)
+        const resultado = await registro.listarValoresInput(data)   
 
         return res.json({ data: resultado, ok: true })
     } catch (error) {
@@ -93,8 +93,8 @@ rutas.post("/cantidaditem", id, async (req, res) => {
 
 rutas.post("/listarinput", id, async (req, res) => {
     // console.log(req.body, 'inputss')
-    const { id, fecha } = req.body
-    const datos = { id, fecha }
+    const { id,fecha } = req.body
+    const datos = { id,fecha }
     try {
         const resultado = await registro.listarInput(datos)
         // console.log(resultado)
@@ -111,8 +111,8 @@ rutas.post("/listarinput", id, async (req, res) => {
 rutas.post("/listarinput2", id, async (req, res) => {
     // console.log(req.body)
     try {
-        const { id, fecha } = req.body
-        const datos = { id, fecha }
+        const { id, fecha} = req.body
+        const datos = { id, fecha}
 
         const resultado = await registro.listarInput2(datos)
         return res.json({ data: resultado, ok: true })
@@ -126,33 +126,26 @@ rutas.post("/listarinput2", id, async (req, res) => {
 
 
 rutas.post("/guardar", async (req, res) => {
-    const { usuario, sest, mes, gestion, input, valor, indicador, variable, fecha, hora, } = req.body
-    const data = {
-        usuario,
-        establecimiento: sest,
-        mes,
-        gestion,
-        indicador,
-        fecha,
-        hora,
-        variable,
-        input,
-        valor,
-    }
     try {
-
-        const result = await registro.insertar(data)
+        const { usuario, sest, mes, gestion,  input, valor, indicador, variable, fecha, hora,} = req.body
+        const data = {
+            usuario,
+            establecimiento: sest,
+            mes,
+            gestion,
+            indicador,
+            fecha,
+            hora,
+            variable,
+            input,
+            valor,
+        }
+        const result=  await registro.insertar(data)
         return res.json({ data: result, ok: true, msg: 'Los valores se guardaron correctamente' })
 
     } catch (error) {
-        console.log(error.sqlState)
-        // const result = await registro.insertar(data)
-        // return res.json({ data: result, ok: true, msg: 'Los valores se guardaron correctamente' })
-        if(error.sqlState==='40001')
-        {
-            console.log('error sql transaccion, enviando mensaje de reintento de transacción')
-        }
-        return res.json({data:error.sqlState, msg: error.sqlMessage, ok: false })
+        console.log(error)
+        return res.json({ msg: 'Error en el servidor', ok: false })
     }
 
 })

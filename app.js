@@ -6,8 +6,8 @@ import cors from 'cors'
 
 
 // mis modulos
-import rutas from "./rutas/rutas.js"
-import {PORT} from "./config.js"
+import rutas from "./src/rutas/rutas.js"
+import {PORT} from "./src/config.js"
 
 
 //inicializar 
@@ -37,7 +37,7 @@ app.use(express.static(path.join(__dirname,"../imagenes/recibos")));
 
 app.disable('x-powered-by') // evita que el atacante sepa que 
 //ejecutamos express js como servidor
-app.use(rutas)
+app.use('/servernet_/',rutas)
 
 
 

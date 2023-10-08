@@ -62,7 +62,7 @@ export class Usuario {
 
     listarRol = async () => {
         const sql =
-            `SELECT id as id, rol as nombre from rol order by nivel desc`;
+            `SELECT id as id, rol as nombre from rol`;
         const [rows] = await pool.query(sql)
         return rows
     }

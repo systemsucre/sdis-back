@@ -15,15 +15,6 @@ import variable from '../controlador/variable.js'
 import registro from '../controlador/registro.js'
 import reportes5 from '../controlador/reportes5.js'
 
-import reportes4 from '../controlador/reportes4.js'
-import opinf4 from '../controlador/opein/opeinf4.js'
-
-import reportes3 from '../controlador/reportes3.js'
-import opinf3 from '../controlador/opein/opeinf3.js'
-
-import reportes2 from '../controlador/reportes2.js'
-import opinf2 from '../controlador/opein/opeinf2.js'
-
 
 
 
@@ -344,19 +335,11 @@ rutas.use("/variable", verificacion, rolesAdmin, variable)
 
 rutas.use("/mes", verificacion, rolesAdminSEDES, mes)
 
-
-rutas.use("/reportes2", verificacion, rolesSedes, reportes2)
-rutas.use("/opeinf2", verificacion, rolesSedes, opinf2)
-
-
-
-rutas.use("/reportes3", verificacion, rolesRed, reportes3)
-rutas.use("/opeinf3", verificacion, rolesRed, opinf3)
+rutas.use("/reportes2", verificacion, rolesSedes, reportes5)
+rutas.use("/reportes3", verificacion, rolesRed, reportes5)
+rutas.use("/reportes4", verificacion, rolesMun, reportes5)
 
 
-
-rutas.use("/reportes4", verificacion, rolesMun, reportes4)
-rutas.use("/opeinf4", verificacion, rolesMun, opinf4)
 
 rutas.use("/registro", verificacion, rolesRegistro, registro)
 rutas.use("/reportes5", verificacion, rolesEst, reportes5)
