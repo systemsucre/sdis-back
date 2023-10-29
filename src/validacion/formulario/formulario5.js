@@ -1,5 +1,5 @@
 import { check } from "express-validator"
-import { validaciones } from "./headers.js"
+import { validaciones } from "../headers.js"
 
 export const insertar = [
 

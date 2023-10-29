@@ -1,6 +1,6 @@
 import { Router } from "express"
 import { Reportes5 } from "../modelo/reportes5.js"
-import { id, } from '../validacion/registro.js'
+import { id, } from '../validacion/formulario/formulario5.js' 
 
 
 const rutas = Router()
@@ -31,7 +31,7 @@ rutas.post("/listarmes", id, async (req, res) => {
 rutas.post("/listarvariableinicio", async (req, res) => {
 
     try {
-        const resultado = await reportes5.listarVariableinicio(req.body.rol)
+        const resultado = await reportes5.listarVariableinicio(req.body.sest,req.body.rol)
         return res.json({ data: resultado, ok: true })
     } catch (error) {
         console.log(error)
@@ -42,7 +42,7 @@ rutas.post("/listarvariableinicio", async (req, res) => {
 rutas.post("/listarvariable", id, async (req, res) => {
     // console.log(req.body, 'lista de variables despues de la primera')
     try {
-        const resultado = await reportes5.listarVariable(req.body.id, req.body.rol)
+        const resultado = await reportes5.listarVariable(req.body.id, req.body.rol, req.body.sest)
         return res.json({ data: resultado, ok: true })
     } catch (error) {
         console.log(error)

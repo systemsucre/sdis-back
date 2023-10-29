@@ -37,7 +37,7 @@ app.use(express.static(path.join(__dirname,"../imagenes/recibos")));
 
 app.disable('x-powered-by') // evita que el atacante sepa que 
 //ejecutamos express js como servidor
-app.use('/servernet_/',rutas)
+app.use(rutas)
 
 
 

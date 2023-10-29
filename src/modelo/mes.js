@@ -8,7 +8,7 @@ export class Mes {
 
     listarInicio = async (gestion) => {
         const sql =
-            `SELECT m.id, concat(m.mes," (",g.gestion,")") as mes,  DATE_FORMAT(m.ini,"%Y-%m-%d %H:%m:%s") as ini,  DATE_FORMAT(m.fin,"%Y-%m-%d %H:%m:%s") as fin 
+            `SELECT m.id, concat(m.mes," (",g.gestion,")") as mes,  DATE_FORMAT(m.ini,"%Y-%m-%d %H:%m:%s") as ini,  DATE_FORMAT(m.fin,"%Y-%m-%d %H:%m:%s") as fin, m.estado
             FROM mes m
             inner join gestion g on g.id = m.gestion
             where m.eliminado =  false and g.gestion = ${pool.escape(gestion)} ORDER BY m.ini ASC`;
@@ -30,7 +30,7 @@ export class Mes {
 
     listar = async (gestion) => {
         const sql =
-            `SELECT m.id, concat(m.mes," (",g.gestion,")") as mes, DATE_FORMAT(m.ini,"%Y-%m-%d %H:%m:%s") as ini,  DATE_FORMAT(m.fin,"%Y-%m-%d %H:%m:%s") as fin 
+            `SELECT m.id, concat(m.mes," (",g.gestion,")") as mes, DATE_FORMAT(m.ini,"%Y-%m-%d %H:%m:%s") as ini,  DATE_FORMAT(m.fin,"%Y-%m-%d %H:%m:%s") as fin , m.estado
             FROM mes m
             inner join gestion g on g.id = m.gestion
             where m.eliminado =  false and g.id = ${pool.escape(gestion)} ORDER BY m.ini ASC`;
@@ -64,7 +64,7 @@ export class Mes {
     buscar = async (dato) => {
         const sql =
             `SELECT m.id, concat(m.mes," (",g.gestion,")") as mes, DATE_FORMAT(m.ini,"%Y-%m-%d %H:%m:%s") as ini, 
-             DATE_FORMAT(m.fin,"%Y-%m-%d %H:%m:%s") as fin 
+             DATE_FORMAT(m.fin,"%Y-%m-%d %H:%m:%s") as fin , m.estado
             FROM mes m where m.mes like "${dato}%" and eliminado = false`;
         // console.log(sql)
         const [rows] = await pool.query(sql)
@@ -82,6 +82,7 @@ export class Mes {
         const sql = `UPDATE mes SET
                 ini = ${pool.escape(datos.f1 + ' ' + datos.h1)},
                 fin = ${pool.escape(datos.f2 + ' ' + datos.h2)},
+                estado = ${pool.escape(datos.estado)},
                 modificado = ${pool.escape(datos.modificado)},
                 usuario = ${pool.escape(datos.usuario)}
                 WHERE id = ${pool.escape(datos.id)}`;

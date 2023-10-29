@@ -10,27 +10,28 @@ export class Usuario {
 
         const sql =
             `SELECT u.id, concat(u.nombre,' ',
-            u.apellido1) as titular, u.celular, e.establecimiento as hospital, u.username, u.estado, u.eliminado
+            u.apellido1) as titular, r.rol, u.username, u.estado, u.eliminado
             from usuario u 
-            inner join establecimiento e on e.id = u.establecimiento
+            left join rol r on r.id = u.rol
+            left join establecimiento e on e.id = u.establecimiento
             where u.estado = 1 and u.id != ${pool.escape(id)}
             ORDER by u.id DESC limit ${pool.escape(cantidad)}`;
-        // console.log('ok', sql)
         const [rows] = await pool.query(sql)
         const cant =
             `SELECT count(id) as cantidad from usuario
             where estado = 1 and id != ${pool.escape(id)}
             `;
         const [cat1] = await pool.query(cant)
-        // console.log(rows, 'lista')
+        console.log(sql, 'lista', )
         return [rows, cat1[0].cantidad]
     }
 
     listarNoActivos = async (id, cantidad) => {
         const sql =
             `SELECT u.id, concat(u.nombre,' ',
-            u.apellido1) as titular, u.celular, e.establecimiento as hospital, u.username, u.estado, u.eliminado
+            u.apellido1) as titular, r.rol, e.establecimiento as hospital, u.username, u.estado, u.eliminado
             from usuario u 
+            left join rol r on r.id = u.rol
             inner join establecimiento e on e.id = u.establecimiento
             where u.estado = 0 and u.id != ${pool.escape(id)}
             ORDER by u.id DESC limit ${pool.escape(cantidad)}`;
@@ -45,14 +46,21 @@ export class Usuario {
     }
     ver = async (id) => {
         let sqlUser = `select u.id, u.nombre, u.apellido1, 
-            u.apellido2,u.username,  u.correo,u.eliminado,
-            u.celular, 
-            u.estado,
-            r.id as idrol, r.rol as rol, e.id as idestablecimiento, e.establecimiento
-            from usuario u
-            inner join establecimiento e on e.id = u.establecimiento
-            left join rol r on r.id = u.rol
-            where u.id = ${pool.escape(id)}`
+                            u.apellido2,u.username,  u.correo, u.eliminado,
+                            u.celular, 
+                            u.estado,
+                            r.nivel as idrol, r.rol as rol, 
+                            if(e.id>0,e.id, null ) as idest, e.establecimiento,
+                            if(m.id>0,m.id, null ) as idmun, m.municipio,
+                            if(red.id>0,red.id, null ) as idred, red.red,
+                            if(v.id>0,v.id, null ) as idvariable, v.variable
+                            from usuario u
+                            left join rol r on r.id = u.rol
+                            left join establecimiento e on e.id = u.establecimiento
+                            left join municipio m on m.id = u.mun
+                            left join variable v on v.id = u.variable
+                            left join red  on red.id = u.red
+                            where u.id  = ${pool.escape(id)}`
 
         const [result] = await pool.query(sqlUser)
         // console.log(result)
@@ -62,10 +70,35 @@ export class Usuario {
 
     listarRol = async () => {
         const sql =
-            `SELECT id as id, rol as nombre from rol order by nivel desc`;
+            `SELECT nivel as id, rol as nombre from rol order by nivel desc`;
+        const [rows] = await pool.query(sql)
+        // console.log(rows)
+        return rows
+    }
+
+    listarVariable = async () => {
+        const sql =
+            `SELECT v.id as id, v.variable as nombre from variable v
+            inner join rol r on r.id = v.rol
+            where estado = 1 and r.nivel = 5  order by v.variable asc`;
         const [rows] = await pool.query(sql)
         return rows
     }
+
+    listarMunicipio = async () => {
+        const sql =
+            `SELECT id as id, municipio as nombre from municipio order by municipio asc`;
+        const [rows] = await pool.query(sql)
+        return rows
+    }
+
+    listarRed = async () => {
+        const sql =
+            `SELECT id as id, red as nombre from red order by red asc`;
+        const [rows] = await pool.query(sql)
+        return rows
+    }
+
 
     listarHospital = async () => {
         const sql =
@@ -88,9 +121,10 @@ export class Usuario {
         // console.log('los datos han llegado', dato)
         const sql =
             `SELECT u.id, concat(u.nombre,' ',
-            u.apellido1) as titular, u.celular, e.establecimiento as hospital, u.username, u.estado 
+            u.apellido1) as titular, r.rol, e.establecimiento as hospital, u.username, u.estado 
             from usuario u 
-            inner join establecimiento e on e.id = u.establecimiento
+            left join rol r on r.id = u.rol
+            left join establecimiento e on e.id = u.establecimiento
             where (u.nombre like '${dato}%' or
             u.correo like '${dato}%' or
             u.apellido1  like '${dato}%' or
@@ -103,9 +137,10 @@ export class Usuario {
         // console.log('los datos han llegado', dato)
         const sql =
             `SELECT u.id, concat(u.nombre,' ',
-            u.apellido1) as titular, u.celular, e.establecimiento as hospital, u.username, u.estado 
+            u.apellido1) as titular, r.rol, e.establecimiento as hospital, u.username, u.estado 
             from usuario u 
-            inner join establecimiento e on e.id = u.establecimiento
+            left join rol r on r.id = u.rol
+            left join establecimiento e on e.id = u.establecimiento
             where (u.nombre like '${dato}%' or
             u.correo like '${dato}%' or
             u.apellido1  like '${dato}%' or
@@ -117,22 +152,25 @@ export class Usuario {
     listarSiguiente = async (id, user, cantidad) => {
         const sql =
             `SELECT u.id, concat(u.nombre,' ',
-            u.apellido1) as titular, u.celular, e.establecimiento as hospital, u.username, u.estado 
+            u.apellido1) as titular, r.rol, e.establecimiento as hospital, u.username, u.estado 
             from usuario u 
-            inner join establecimiento e on e.id = u.establecimiento
+            left join rol r on r.id = u.rol
+            left join establecimiento e on e.id = u.establecimiento
             where  u.estado = 1 and u.id != ${pool.escape(user)}
-            and u.id < ${pool.escape(id)} ORDER by id DESC  limit ${pool.escape(cantidad)}`;
+            and u.id < ${pool.escape(id)} ORDER by u.id DESC  limit ${pool.escape(cantidad)}`;
         const [rows] = await pool.query(sql)
+        console.log('los datos han llegado', sql)
         return rows
     }
     listarAnterior = async (id, user, cantidad) => {
         const sql =
             `SELECT u.id, concat(u.nombre,' ',
-            u.apellido1) as titular, u.celular, e.establecimiento as hospital, u.username, u.estado 
+            u.apellido1) as titular, r.rol, e.establecimiento as hospital, u.username, u.estado 
             from usuario u 
-            inner join establecimiento e on e.id = u.establecimiento
+            left join rol r on r.id = u.rol
+            left join establecimiento e on e.id = u.establecimiento
             
-            WHERE u.id > ${pool.escape(id)} and u.estado = 1  and u.id != ${pool.escape(user)}
+            WHERE u.id > ${pool.escape(id)} and u.estado = 1  and u.id != ${pool.escape(user)} 
             limit ${pool.escape(cantidad)}`;
         const [rows] = await pool.query(sql)
         rows.reverse()
@@ -142,9 +180,10 @@ export class Usuario {
     listarSiguiente_ = async (id, user, cantidad) => {
         const sql =
             `SELECT u.id, concat(u.nombre,' ',
-            u.apellido1) as titular, u.celular, e.establecimiento as hospital, u.username, u.estado 
+            u.apellido1) as titular, r.rol, e.establecimiento as hospital, u.username, u.estado 
             from usuario u 
-            inner join establecimiento e on e.id = u.establecimiento
+            left join rol r on r.id = u.rol
+            left join establecimiento e on e.id = u.establecimiento
             where  u.estado = 0 and u.id != ${pool.escape(user)}
             and u.id < ${pool.escape(id)} ORDER by id DESC  limit ${pool.escape(cantidad)}`;
         const [rows] = await pool.query(sql)
@@ -153,9 +192,10 @@ export class Usuario {
     listarAnterior_ = async (id, user, cantidad) => {
         const sql =
             `SELECT u.id, concat(u.nombre,' ',
-            u.apellido1) as titular, u.celular, e.establecimiento as hospital, u.username, u.estado 
+            u.apellido1) as titular, r.rol, e.establecimiento as hospital, u.username, u.estado 
             from usuario u 
-            inner join establecimiento e on e.id = u.establecimiento
+            left join rol r on r.id = u.rol
+            left join establecimiento e on e.id = u.establecimiento
             
             WHERE u.id > ${pool.escape(id)} and u.estado = 0  and u.id != ${pool.escape(user)}
             limit ${pool.escape(cantidad)}`;
@@ -163,14 +203,6 @@ export class Usuario {
         rows.reverse()
         return rows
     }
-
-
-
-
-
-
-
-
 
 
 
@@ -188,12 +220,19 @@ export class Usuario {
             const [rowsCorreo] = await pool.query(sqlexisteC)
 
             if (rowsCorreo.length === 0) {
+                const sqlId =
+                    `SELECT id from rol where
+                nivel = ${pool.escape(datos.rol)}`;
+                const [idRol] = await pool.query(sqlId)
+                datos.rol = idRol[0].id
                 await pool.query("INSERT INTO usuario SET  ?", datos)
                 return await this.listarActivos(datos.usuario, cantidad)
             } else return { existe: 2 }
         }
         else return { existe: 1 }
     }
+
+
 
 
     actualizar = async (datos) => {
@@ -210,14 +249,31 @@ export class Usuario {
             const [rowsCi] = await pool.query(sqlexisteCi)
 
             if (rowsCi.length === 0) {
+                const sqlId =
+                    `SELECT id from rol where
+                    nivel = ${pool.escape(datos.rol)}`;
+                const [idRol] = await pool.query(sqlId)
+
+                const sqlReiciarvalores = `UPDATE usuario SET
+                establecimiento = null, mun=0, red=0, variable = 0
+                WHERE id = ${pool.escape(datos.id)}`;
+
+                await pool.query(sqlReiciarvalores)
+
                 const sql = `UPDATE usuario SET
-                rol = ${pool.escape(datos.rol)},
-                establecimiento = ${pool.escape(datos.hospital)},
+                rol = ${pool.escape(idRol[0].id)},
+                
                 nombre = ${pool.escape(datos.nombre)},
                 apellido1 = ${pool.escape(datos.ape1)},
                 apellido2 = ${pool.escape(datos.ape2)},
                 celular = ${pool.escape(datos.celular)},
                 correo = ${pool.escape(datos.correo)},
+
+                variable = ${pool.escape(datos.variable)},
+                mun = ${pool.escape(datos.mun)},
+                red = ${pool.escape(datos.red)},
+                establecimiento = ${pool.escape(datos.establecimiento)},  
+
                 eliminado=${pool.escape(datos.estado)},
                 modificado = ${pool.escape(datos.modificado)},
                 usuario = ${pool.escape(datos.usuario)}
@@ -313,8 +369,13 @@ export class Usuario {
             const [rowsCi] = await pool.query(sqlexisteCi)
 
             if (rowsCi.length === 0) {
+
+                const sqlId =
+                    `SELECT id from rol where
+                    nivel = ${pool.escape(datos.rol)}`;
+                const [idRol] = await pool.query(sqlId)
                 const sql = `UPDATE usuario SET
-                rol = ${pool.escape(datos.rol)},
+                rol = ${pool.escape(idRol[0].id)},
                 establecimiento = ${pool.escape(datos.hospital)},
                 nombre = ${pool.escape(datos.nombre)},
                 apellido1 = ${pool.escape(datos.ape1)},
@@ -340,11 +401,11 @@ export class Usuario {
 
 
     actualizarMiPerfil = async (datos) => {
-        const sqlExists = `SELECT * FROM usuario WHERE 
-            correo = ${pool.escape(datos.correo)} 
-            and id !=${pool.escape(datos.usuario)}`;
-        const [result] = await pool.query(sqlExists)
-        if (result.length === 0) { 
+        const sqlexisteCorreo =
+        `SELECT correo from usuario where
+        correo = ${pool.escape(datos.correo)} and id != ${pool.escape(datos.usuario)} and correo != 'example@sdis.ve'`;
+        const [result] = await pool.query(sqlexisteCorreo)
+        if (result.length === 0) {
 
             const sql = `UPDATE usuario SET
             nombre = ${pool.escape(datos.nombre)},
@@ -361,16 +422,38 @@ export class Usuario {
     }
 
     miPerfil = async (id) => {
-        let sqlUser = `select u.id, u.nombre, u.apellido1, 
-            u.apellido2,u.username, u.correo,
+        
+        // let sqlUser = `select u.id, u.nombre, u.apellido1, 
+        //     u.apellido2,u.username, u.correo,
+        //     r.rol as nombre, 
+        //     u.estado,
+        //     r.rol as rol,  e.establecimiento
+        //     from usuario u
+        //     left join rol r on r.id = u.rol
+        //     left join establecimiento e on e.id = u.establecimiento
+        //     left join municipio m on m.id = u.mun
+        //     left join variable v on v.id = u.variable
+        //     left join red  on red.id = u.red
+        //     where u.id = ${pool.escape(id)}`
+
+            let sqlUser = `select u.id, u.nombre, u.apellido1, 
+            u.apellido2,u.username,  u.correo, u.eliminado,
             u.celular, 
             u.estado,
-            r.rol as rol,  e.establecimiento
+            r.nivel as idrol, r.rol as rol, 
+            if(e.id>0,e.id, null ) as idest, e.establecimiento,
+            if(m.id>0,m.id, null ) as idmun, m.municipio,
+            if(red.id>0,red.id, null ) as idred, red.red,
+            if(v.id>0,v.id, null ) as idvariable, v.variable
             from usuario u
-            inner join establecimiento e on e.id = u.establecimiento
             left join rol r on r.id = u.rol
-            where u.id = ${pool.escape(id)}`
+            left join establecimiento e on e.id = u.establecimiento
+            left join municipio m on m.id = u.mun
+            left join variable v on v.id = u.variable
+            left join red  on red.id = u.red
+            where u.id  = ${pool.escape(id)}`
         const [rows] = await pool.query(sqlUser)
+        console.log(id, 'llamada verperfil', rows)
         return rows
     }
 

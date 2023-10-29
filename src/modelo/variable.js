@@ -12,33 +12,51 @@ export class Variable {
             `SELECT id, gestion as nombre FROM gestion where eliminado = false and estado = true ORDER BY id ASC`;
         const [rows] = await pool.query(sql)
         const sqlRol =
-            `SELECT id, rol as nombre, nivel FROM rol where nivel > 1  ORDER BY nivel desc`;
+            `SELECT id, rol as nombre, nivel FROM rol where nivel > 1 ORDER BY nivel desc`;
         const [rowsRol] = await pool.query(sqlRol)
+        const sql1 =
+            `SELECT id, ssector as nombre FROM ssector`
+        const [rows1] = await pool.query(sql1)
+
         // console.log(rowsRol)
-        return [rows, rowsRol]
+        return [rows, rowsRol, rows1]
     }
 
     listar = async (datos) => {
 
-
         const sql =
-            `SELECT v.id,v.variable,g.gestion,r.rol, v.estado, if(count(vl.id)>0, 1, 0) as eliminar from variable v
+            `SELECT v.id,v.variable,g.gestion,r.rol, v.estado, if(count(vl.id)>0, 1, 0) as eliminar 
+            from variable v
             inner join gestion g on g.id = v.gestion
             inner join rol r on r.id = v.rol
             left join valor vl on vl.variable = v.id
-            where (g.id = ${pool.escape(datos.gestion)} or g.gestion = ${pool.escape(datos.gestion)}) and r.id = ${pool.escape(datos.rol)}
+            inner join ssvariable ssv on v.id = ssv.variable
+            
+
+            where g.id = ${pool.escape(datos.gestion)} and r.id = ${pool.escape(datos.rol)} and ssv.ssector = ${pool.escape(datos.ssector)}
             GROUP by v.id
-             ORDER BY v.id ASC`;
-        // console.log(sql)
+            ORDER BY v.id ASC`;
+
         const [rows] = await pool.query(sql)
 
-        const sql_ =
-            `SELECT count(v.id) as cantidad FROM variable v 
-            inner join gestion g on g.id = v.gestion
-            inner join rol r on r.id = v.rol
-            where  (g.id = ${pool.escape(datos.gestion)} or g.gestion = ${pool.escape(datos.gestion)}) and r.id = ${pool.escape(datos.rol)}`;
-        const [rows_] = await pool.query(sql_)
-        return [rows, rows_[0].cantidad]
+        return [rows, rows.length]
+    }
+
+    listarRelacion = async (variable) => {
+        const sql =
+            `select ssector as id  from  ssvariable 
+            where  variable = ${pool.escape(variable)}`;
+        const [rows] = await pool.query(sql)
+        // console.log(rows)
+        return rows
+    }
+
+    listarRelacionInsertar = async () => {
+        const sql1 =
+            `SELECT id, ssector as nombre FROM ssector`
+        const [rows1] = await pool.query(sql1)
+        // console.log(rows1)
+        return rows1
     }
 
     insertar = async (datos) => {
@@ -71,8 +89,8 @@ export class Variable {
                     if (rowNum.length > 0)
                         num = rowNum[0].num + 1
                     datos.num = num
-                    await pool.query("INSERT INTO variable SET  ?", datos)
-                    return await this.listar({ gestion: rowAño[0].id, rol: rowRol[0].id })
+                    const [result] = await pool.query("INSERT INTO variable SET  ?", datos)
+                    return result.insertId
                 } else return { existe: 1 }
             } else return { existe: 2 }
         } else return { existe: 3 }
@@ -101,7 +119,7 @@ export class Variable {
                                 WHERE id = ${pool.escape(datos.id)}`;
             await pool.query(sql);
 
-            return await this.listar({ gestion: rowsaño[0].id, rol: datos.rol })
+            return await this.listar({ gestion: rowsaño[0].id, rol: datos.rol, ssector: datos.ssector })
         } return { existe: 1 }
     }
 
@@ -111,7 +129,21 @@ export class Variable {
                 where variable =${pool.escape(datos.id)}`;
 
         const [rowsvalor] = await pool.query(variable)
+
+
         if (rowsvalor.length === 0) {
+
+            const sqlDeleSSV = `delete from ssvariable
+            WHERE variable = ${pool.escape(datos.id)}`;
+            await pool.query(sqlDeleSSV);
+            const sqlDele = `delete from cabeceras
+            WHERE variable = ${pool.escape(datos.id)}`;
+            await pool.query(sqlDele);
+
+            const sqlDeleEntradas = `delete from entrada
+            WHERE variable = ${pool.escape(datos.id)}`;
+
+            await pool.query(sqlDeleEntradas);
             const sqlInput = `delete from input
                 WHERE variable = ${pool.escape(datos.id)}`;
             await pool.query(sqlInput);
@@ -129,6 +161,7 @@ export class Variable {
 
 
     detener = async (datos) => {
+        console.log(datos, 'detener editar input')
         const sql = `UPDATE variable SET
                 estado = 0,
                 modificado = ${pool.escape(datos.modificado)},
@@ -140,23 +173,45 @@ export class Variable {
         WHERE variable = ${pool.escape(datos.variable)}`;
         await pool.query(sqlDele);
 
+        const sqlDeleEntradas = `delete from entrada
+        WHERE variable = ${pool.escape(datos.variable)}`;
+        await pool.query(sqlDeleEntradas);
+
         return await this.listar(datos)
     }
 
-    // suspender = async (datos) => {
-    //     const sql = `UPDATE variable SET
-    //             estado = 3,
-    //             modificado = ${pool.escape(datos.modificado)},
-    //             usuario = ${pool.escape(datos.usuario)}
-    //             WHERE id = ${pool.escape(datos.variable)}`;
-    //     await pool.query(sql);
+    listarInput1 = async (indicador) => {
 
-    //     const sqlDele = `delete from cabeceras
-    //     WHERE variable = ${pool.escape(datos.variable)}`;
-    //     await pool.query(sqlDele);
+        const sql =
+            `SELECT i.id, i.cod, ind.id as indicador, i.idinput, i.input, i.orden, i.nivel, i.tope,
+                    i.variable, DATE_FORMAT(i.ini, '%Y-%m-%d') as ini, DATE_FORMAT(i.fin, '%Y-%m-%d') as fin,
+                    i.indicador_, i.ordengen, i.estado,  if(count(vl.id)>0, 1, 0) as eliminar
+            from input i
+            inner join indicador ind on ind.id = i.indicador
+            left join valor vl on vl.cod = i.cod
+            where ind.id = ${pool.escape(indicador)} and ind.estado = 1  and i.estado = 1 GROUP by i.id ORDER BY i.orden ASC`;
+        const [rows] = await pool.query(sql)
 
-    //     return await this.listar(datos)
-    // }
+        return rows
+    }
+
+    listarInput21 = async (input) => {
+        // console.log('funcion solicitada')
+        const sqlDependiente =
+            `SELECT i.id, i.cod, null as indicador, i.idinput, i.input, i.orden, i.nivel, i.tope,
+                        i.variable, DATE_FORMAT(i.ini, '%Y-%m-%d') as ini, DATE_FORMAT(i.fin, '%Y-%m-%d') as fin,
+                        i.indicador_, i.ordengen, i.estado,  if(count(vl.id)>0, 1, 0) as eliminar
+
+                        from input i
+                        inner join input ind on ind.id = i.idinput
+                        left join valor vl on vl.cod = i.cod
+                        where ind.id = ${pool.escape(input)} and ind.estado = 1 and i.estado = 1 GROUP by i.id ORDER BY i.orden DESC`;
+        const [arrayNivel2] = await pool.query(sqlDependiente)
+
+        // console.log(arrayNivel2)
+
+        return arrayNivel2
+    }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////7
     /////////////////////////////////////////////////////////////////////////////////////////////////////////7
@@ -174,6 +229,25 @@ export class Variable {
             inner join indicador f on v.id = f.variable
             left join valor vl on vl.indicador = f.id
             where  v.id = ${pool.escape(variable)}  GROUP by f.id ORDER BY f.id ASC`;
+        const [rows] = await pool.query(sql)
+
+        const sql_ =
+            `SELECT count(v.id) as cantidad FROM variable v 
+            inner join indicador f on v.id = f.variable
+            where  v.id = ${pool.escape(variable)}`;
+        const [rows_] = await pool.query(sql_)
+
+        return [rows, rows_[0].cantidad]
+    }
+
+    listarIndicador1 = async (variable) => {
+        const sql =
+            `SELECT f.id, v.variable,f.indicador, DATE_FORMAT(f.ini, '%Y-%m-%d') as ini, DATE_FORMAT(f.fin, '%Y-%m-%d') as fin, 
+            if(count(vl.id)>0, 1, 0) as eliminar
+            from variable v
+            inner join indicador f on v.id = f.variable
+            left join valor vl on vl.indicador = f.id
+            where  v.id = ${pool.escape(variable)} and f.estado = 1 GROUP by f.id ORDER BY f.id ASC`;
         const [rows] = await pool.query(sql)
 
         const sql_ =
@@ -208,7 +282,7 @@ export class Variable {
             datos.num = num
             const [resultado] = await pool.query("INSERT INTO indicador SET  ?", datos)
             const [datos_] = await this.listarIndicador(datos.variable)
-            // console.log(resultado.insertId, 'id insertado')
+            this.detener({ modificado: datos.creado, usuario: datos.usuario, variable: datos.variable })
             return [datos_, resultado.insertId]
 
         } else return { existe: 1 }
@@ -233,7 +307,7 @@ export class Variable {
                     usuario = ${pool.escape(datos.usuario)}
                     WHERE id = ${pool.escape(datos.id)}`;
             await pool.query(sql);
-
+            this.detener({ modificado: datos.modificado, usuario: datos.usuario, variable: datos.variable })
             return await this.listarIndicador(datos.variable)
 
         } return { existe: 1 }
@@ -252,7 +326,7 @@ export class Variable {
             const sqlIndicador = `delete from indicador
                 WHERE id = ${pool.escape(datos.id)}`;
             await pool.query(sqlIndicador);
-
+            this.detener({ modificado: datos.modificado, usuario: datos.usuario, variable: datos.variable })
             return await this.listarIndicador(datos.variable)
         } return { existe: 1 }
     }
@@ -264,7 +338,7 @@ export class Variable {
                             usuario = ${pool.escape(datos.usuario)}
                             WHERE id = ${pool.escape(datos.id)}`;
         await pool.query(sql);
-
+        this.detener({ modificado: datos.modificado, usuario: datos.usuario, variable: datos.variable })
         return await this.listarIndicador(datos.variable)
     }
 
@@ -276,7 +350,7 @@ export class Variable {
                             usuario = ${pool.escape(datos.usuario)}
                             WHERE id = ${pool.escape(datos.id)}`;
         await pool.query(sql);
-
+        this.detener({ modificado: datos.modificado, usuario: datos.usuario, variable: datos.variable })
         return await this.listarIndicador(datos.variable)
     }
 
@@ -293,11 +367,13 @@ export class Variable {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////7
 
 
+
     listarInput = async (indicador) => {
 
         const sql =
-            `SELECT i.id, i.input, i.idinput, i.nivel, i.tope, i.orden, i.cod, DATE_FORMAT(i.ini, '%Y-%m-%d') as ini, DATE_FORMAT(i.fin, '%Y-%m-%d') as fin, i.estado,
-             i.ordengen, i.cod, if(count(vl.id)>0, 1, 0) as eliminar
+            `SELECT i.id, i.cod, ind.id as indicador, i.idinput, i.input, i.orden, i.nivel, i.tope,
+                    i.variable, DATE_FORMAT(i.ini, '%Y-%m-%d') as ini, DATE_FORMAT(i.fin, '%Y-%m-%d') as fin,
+                    i.indicador_, i.ordengen, i.estado,  if(count(vl.id)>0, 1, 0) as eliminar
             from input i
             inner join indicador ind on ind.id = i.indicador
             left join valor vl on vl.cod = i.cod
@@ -309,8 +385,10 @@ export class Variable {
 
     listarInput2 = async (input) => {
         const sqlDependiente =
-            `SELECT i.id, i.input, i.idinput, i.nivel, i.tope, i.orden, i.cod, DATE_FORMAT(i.ini, '%Y-%m-%d') as ini, DATE_FORMAT(i.fin, '%Y-%m-%d') as fin, i.estado,
-            i.ordengen, i.cod, if(count(vl.id)>0, 1, 0) as eliminar
+            `SELECT i.id, i.cod, null as indicador, i.idinput, i.input, i.orden, i.nivel, i.tope,
+                        i.variable, DATE_FORMAT(i.ini, '%Y-%m-%d') as ini, DATE_FORMAT(i.fin, '%Y-%m-%d') as fin,
+                        i.indicador_, i.ordengen, i.estado,  if(count(vl.id)>0, 1, 0) as eliminar
+
                         from input i
                         inner join input ind on ind.id = i.idinput
                         left join valor vl on vl.cod = i.cod
@@ -429,7 +507,8 @@ export class Variable {
                                         fin: datos.fin, estado: e3.estado,
                                         tope: e3.tope, orden: e3.orden, cod: e3.cod, indicador_: datos.indicador, creado: datos.creado, usuario: datos.usuario, ordengen: e3.ordengen
                                     }
-                                    const [result3] = await pool.query("INSERT INTO input SET  ?", datos_3)
+                                    await pool.query("INSERT INTO input SET  ?", datos_3)
+                                    this.detener({ modificado: datos.creado, usuario: datos.usuario, variable: datos.variable })
                                 }
                             })
                         }
@@ -446,7 +525,7 @@ export class Variable {
 
 
 
-    actualizarInput = async (datos) => {
+    actualizarInput_ = async (datos) => {
 
         // console.log(datos, 'modelo')
         const sqlExiste =
@@ -461,6 +540,7 @@ export class Variable {
                   usuario = ${datos.usuario}, modificado = ${pool.escape(datos.modificado)}
                   where cod = ${pool.escape(datos.codigo)}`;
             await pool.query(sqlUpd)
+            this.detener({ modificado: datos.modificado, usuario: datos.usuario, variable: datos.variable_ })
             return { ok: true }
 
         } else { console.log(' existe'); return { existe: 1 } }
@@ -619,7 +699,7 @@ export class Variable {
                     await pool.query(sqlInput);
                 })
             })
-            return { ok: true } 
+            return { ok: true }
 
         } else {
             const sqlInput = `update input set estado = 0,
@@ -684,7 +764,7 @@ export class Variable {
 
                     const datos_ = {
                         idinput: e.id, cod: codigo, input: datos.input, orden: orden, nivel: datos.nivel + 1, ini: datos.ini, fin: datos.fin,
-                        variable: datos.variable, indicador_: e.indicador_, ordengen: ordengen, estado:datos.estado,
+                        variable: datos.variable, indicador_: e.indicador_, ordengen: ordengen, estado: datos.estado,
                         creado: datos.creado, usuario: datos.usuario
                     }
                     // console.log(e, datos_)

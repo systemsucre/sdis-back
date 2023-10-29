@@ -66,6 +66,9 @@ export const gestion = [
     check('gestion')
         .exists()
         .matches(/^\d{1,10}$/),
+    check('ssector')
+        .exists()
+        .matches(/^\d{1,10}$/),
     check('rol_')
         .exists()
         .matches(/^\d{1,10}$/),
@@ -257,6 +260,9 @@ export const editarInput = [
     check('fin')
         .exists()
         .matches(/\d{4}[-]\d{2}[-]\d{2}/)
+        .exists(),
+    check('variable_')
+        .matches(/^\d{1,10}$/)
         .exists(),
     check('modificado')
         .exists()

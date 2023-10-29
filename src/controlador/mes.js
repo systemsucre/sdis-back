@@ -65,12 +65,12 @@ rutas.post("/buscar", buscar, async (req, res) => {
 rutas.post("/actualizar", editar, async (req, res) => {
     console.log(req.body)
 
-    const { id, f1, h1, f2, h2, modificado, usuario } = req.body
+    const { id, f1, h1, f2, h2, modificado, estado, usuario } = req.body
     const datos = {
         id,
         f1, h1, f2, h2,
         modificado,
-        usuario
+        usuario, estado 
     }
     try {
         await mes.actualizar(datos).then(j => {

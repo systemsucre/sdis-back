@@ -12,19 +12,35 @@ import miPerfil from '../controlador/miPerfil.js'
 
 import mes from '../controlador/mes.js'
 import variable from '../controlador/variable.js'
-import registro from '../controlador/registro.js'
+
+// ESTABLECIMIENTOS
+import formulario5 from '../controlador/formulario/formulario5.js'
 import reportes5 from '../controlador/reportes5.js'
 
+
+//MUNICIPIOS
+import formulario4 from '../controlador/formulario/formulario4.js'
 import reportes4 from '../controlador/reportes4.js'
 import opinf4 from '../controlador/opein/opeinf4.js'
 
+
+//RED
+import formulario3 from '../controlador/formulario/formulario3.js'
 import reportes3 from '../controlador/reportes3.js'
 import opinf3 from '../controlador/opein/opeinf3.js'
 
+// AREA
+import formulario6 from '../controlador/formulario/formulario6.js'
+import reportes6 from '../controlador/reportes6.js'
+import opinf6 from '../controlador/opein/opeinf6.js'
+
+
+
+
+// SEDES
+import formulario2 from '../controlador/formulario/formulario2.js'
 import reportes2 from '../controlador/reportes2.js'
 import opinf2 from '../controlador/opein/opeinf2.js'
-
-
 
 
 // archivos publicos
@@ -44,19 +60,22 @@ const rutas = express();
 rutas.get('/', async (req, res) => {
 
     try {
-        const sql = `SELECT p.id, UPPER(r.rol) as rol, r.nivel as numero,
+        const sql = `SELECT p.id, UPPER(r.rol) as rol, r.nivel as numero, p.variable,
         p.username, concat(UPPER(left(p.nombre,1)),LOWER(SUBSTRING(p.nombre,2))) as nombre, 
         concat(UPPER(left(p.apellido1,1)),LOWER(SUBSTRING(p.apellido1,2))) as apellido, p.apellido1, p.apellido2,
-        m.id as idmunicipio, m.municipio, e.id as idestablecimiento, e.establecimiento, re.id as idred, re.red as red
+        m.id as idmunicipio, m.municipio, e.id as idestablecimiento, e.establecimiento, re.id as idred, re.red as red, ss.ssector, a.variable as area
         from usuario p 
         inner join rol r on p.rol = r.id
-        inner join establecimiento e on e.id = p.establecimiento
-        inner join municipio m on m.id = e.municipio
-        inner join red re on re.id = m.red
-        where p.username = ${pool.escape(req.query.intel)} and p.pass = ${pool.escape(req.query.viva)} and p.estado = 1 and p.eliminado = 0 and e.eliminado = 0 `;
+        left join establecimiento e on e.id = p.establecimiento
+        left join ssector ss on ss.id = e.ssector
+        left join municipio m on m.id = p.mun
+        left join red re on re.id = p.red
+        left join variable a on a.id = p.variable
+        where p.username = ${pool.escape(req.query.intel)} and p.pass = ${pool.escape(req.query.viva)} and p.estado = 1 and p.eliminado = 0`;
         const [result] = await pool.query(sql)
-
+        // console.log(result, 'iniciio de sesion', sql)
         if (result.length === 1) {
+
             let fecha = new Date();
             const payload = {
                 "usuario": result[0].username,
@@ -80,6 +99,7 @@ rutas.get('/', async (req, res) => {
                 est: result[0].idestablecimiento,
                 mun: result[0].idmunicipio,
                 red: result[0].idred,
+                var: result[0].variable,
                 numero: result[0].numero
             }
 
@@ -97,6 +117,8 @@ rutas.get('/', async (req, res) => {
                     "establecimiento": result[0].establecimiento,
                     "municipio": result[0].municipio,
                     "red": result[0].red,
+                    "ssector": result[0].ssector,
+                    "area": result[0].area,
                     ok: true,
                     msg: 'Acceso correcto'
                 })
@@ -127,7 +149,6 @@ rutas.post('/logout', (req, res) => {
 
 
 
-
 rutas.get('/listarestablecimiento', async (req, res) => {
     try {
         const sql =
@@ -139,8 +160,6 @@ rutas.get('/listarestablecimiento', async (req, res) => {
     }
 
 })
-
-
 
 rutas.get('/olvideMiContrasena', async (req, res) => {
     // console.log('llego', req.query.correo)
@@ -203,9 +222,6 @@ rutas.get('/olvideMiContrasena', async (req, res) => {
     }
 })
 
-
-
-
 rutas.get('/codigo', async (req, res) => {
     console.log('llego', req.query.correo, req.query.codigo)
     let correo = req.query.correo
@@ -267,7 +283,7 @@ verificacion.use((req, res, next) => {
                 }
 
                 // console.log('pasa la verificacion del token', bearetoken)
-                const sql = `SELECT usuario, est as sest, mun as smun, red as sred, numero from sesion s 
+                const sql = `SELECT usuario, est as sest, mun as smun, red as sred,var as svar, numero from sesion s 
                
                 where token  = ${pool.escape(bearetoken)}`;
                 const [result] = await pool.query(sql)
@@ -276,6 +292,7 @@ verificacion.use((req, res, next) => {
                     req.body.rol = await result[0].numero
                     req.body.sest = await result[0].sest
                     req.body.smun = await result[0].smun
+                    req.body.svar = await result[0].svar
                     req.body.sred = await result[0].sred
                     next()
                 }
@@ -306,19 +323,19 @@ const rolesAdminSEDES = (req, res, next) => {
         next()
     } else return res.json({ ok: false, msg: 'Esta Funcionalidad no esta destinado para su rol' })
 }
-
-const rolesRegistro = (req, res, next) => {
-    // console.log(req.body.rol)
-    if (parseInt(req.body.rol > 2) || parseInt(req.body.rol) < 6) {
+const rolesArea = (req, res, next) => {
+    if (parseInt(req.body.rol) === 6) {
         next()
     } else return res.json({ ok: false, msg: 'Esta Funcionalidad no esta destinado para su rol' })
 }
+
 
 const rolesSedes = (req, res, next) => {
     if (parseInt(req.body.rol) === 2) {
         next()
     } else return res.json({ ok: false, msg: 'Esta Funcionalidad no esta destinado para su rol' })
 }
+
 const rolesRed = (req, res, next) => {
     if (parseInt(req.body.rol) === 3) {
         next()
@@ -344,21 +361,30 @@ rutas.use("/variable", verificacion, rolesAdmin, variable)
 
 rutas.use("/mes", verificacion, rolesAdminSEDES, mes)
 
-
+// sedes
+rutas.use("/formulario2", verificacion, rolesSedes, formulario2)
 rutas.use("/reportes2", verificacion, rolesSedes, reportes2)
 rutas.use("/opeinf2", verificacion, rolesSedes, opinf2)
 
+// AREA
+rutas.use("/formulario6", verificacion, rolesArea, formulario6)
+rutas.use("/reportes6", verificacion, rolesArea, reportes6)
+rutas.use("/opeinf6", verificacion, rolesArea, opinf6)
 
 
+//red
+rutas.use("/formulario3", verificacion, rolesRed, formulario3)
 rutas.use("/reportes3", verificacion, rolesRed, reportes3)
 rutas.use("/opeinf3", verificacion, rolesRed, opinf3)
 
 
-
+//municipios
+rutas.use("/formulario4", verificacion, rolesMun, formulario4)
 rutas.use("/reportes4", verificacion, rolesMun, reportes4)
 rutas.use("/opeinf4", verificacion, rolesMun, opinf4)
 
-rutas.use("/registro", verificacion, rolesRegistro, registro)
+//establecimientos
+rutas.use("/registro", verificacion, rolesEst, formulario5)
 rutas.use("/reportes5", verificacion, rolesEst, reportes5)
 
 

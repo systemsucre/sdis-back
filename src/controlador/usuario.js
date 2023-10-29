@@ -1,6 +1,6 @@
 import { Router } from "express"
 import { Usuario } from "../modelo/usuario.js"
-import { buscar, siguiente, insertar, actualizar, recet, validar } from '../validacion/usuario.js'
+import { buscar, siguiente, insertar, actualizar, recet, validar,} from '../validacion/usuario.js'
 import { CLAVEGMAIL } from '../config.js'
 import nodemailer from "nodemailer";
 //const modelo from "../modelo/usuario.js"
@@ -53,11 +53,43 @@ rutas.post("/rol", async (req, res) => {
     }
 })
 
+rutas.post("/variable", async (req, res) => {
+    try {
+        const resultado = await usuarios.listarVariable()
+        return res.json(resultado)
+    } catch (error) {
+        return res.status(500).send(error)
+    }
+})
+
+rutas.post("/municipio", async (req, res) => {
+    try {
+        const resultado = await usuarios.listarMunicipio()
+        return res.json(resultado)
+    } catch (error) {
+        console.log(error)
+        return res.status(500).send(error)
+    }
+})
+
+rutas.post("/red", async (req, res) => {
+    try {
+        const resultado = await usuarios.listarRed()
+        return res.json(resultado)
+    } catch (error) {
+        console.log(error)
+        return res.status(500).send(error)
+    }
+})
+
+
+
 rutas.post("/establecimientos", async (req, res) => {
     try {
         const resultado = await usuarios.listarHospital()
         return res.json(resultado)
     } catch (error) {
+        console.log(error)
         return res.status(500).send(error)
     }
 })
@@ -177,14 +209,17 @@ rutas.post("/anterior_", siguiente, async (req, res) => {
 rutas.post("/registrar", insertar, async (req, res) => {
 
     console.log('datos: ', req.body)
-    const { username, otros, hospital, rol_, nombre, ape1,
+    const { username, otros, rol_, variable, nombre, ape1,lugar,
         ape2, celular, correo, creado, usuario } = req.body
     const datos = {
         username,
         pass: otros,
-        establecimiento: hospital,
         rol: rol_,
         nombre,
+        variable,
+        establecimiento:rol_==5?lugar:null,
+        mun:rol_==4?lugar:null,
+        red:rol_==3?lugar:null,
         apellido1: ape1,
         apellido2: ape2,
         celular,
@@ -214,15 +249,17 @@ rutas.post("/actualizar", actualizar, async (req, res) => {
 
     console.log('datos: ', req.body)
 
-    const { id, rol_, estado, hospital, nombre, ape1,
+    const { id, rol_, estado, variable, lugar, nombre, ape1,
         ape2, celular, correo, modificado, usuario, } = req.body
     const datos = {
         id,
-        rol: rol_, estado,
-        hospital,
+        rol: rol_, estado,  
+        establecimiento:rol_==5?lugar:null,
+        mun:rol_==4?lugar:null,
+        red:rol_==3?lugar:null,
         nombre,
         ape1,
-        ape2,
+        ape2, variable,
         celular,
         correo,
         modificado,
@@ -269,19 +306,20 @@ rutas.post("/recet", recet, async (req, res) => {
 rutas.post("/validar", validar, async (req, res) => {
     // console.log(req.body)
     try {
-        const { id, rol_, hospital, nombre, ape1,
-            ape2, celular, correo, modificado, usuario, cantidad} = req.body
+        const { id, rol_, variable, hospital, nombre, ape1,
+            ape2, celular, correo, modificado, usuario, cantidad } = req.body
         const datos = {
             id,
             rol: rol_,
             hospital,
             nombre,
             ape1,
+            variable,
             ape2,
             celular,
             correo,
             modificado,
-            usuario,cantidad
+            usuario, cantidad
         }
         const resultado = await usuarios.validar(datos)
         return res.json({ ok: true, data: resultado, msg: 'El usuario activado correctamente' })

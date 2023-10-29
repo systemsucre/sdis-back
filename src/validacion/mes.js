@@ -45,6 +45,7 @@ export const editar = [
     check('h2')
         .matches(/\d{2}[:]\d{2}[:]\d{2}/)
         .exists(),
+    check('estado').isLength({ min: 1 }).exists().isNumeric(),
     check('modificado')
         .exists()
         .matches(/^\d{4}-\d{2}-\d{2} \d{1,2}:\d{2}:\d{2}$/),
@@ -74,9 +75,9 @@ export const gestion = [
     check('gestion')
         .exists()
         .matches(/^\d{4}$/),
-        (req, res, next) => {
-    validaciones(req, res, next)
-}
+    (req, res, next) => {
+        validaciones(req, res, next)
+    }
 ]
 
 // buscar

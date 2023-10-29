@@ -15,9 +15,10 @@ export const insertar = [
     check('rol_')
         .matches(/^\d{1,10}$/)
         .exists(),
-    check('hospital')
-        .matches(/^\d{1,10}$/)
-        .exists(),
+    check('variable')
+        .matches(/^\d{1,10}$/),
+    check('lugar')
+        .matches(/^\d{1,10}$/),
     check('nombre')
         .matches(/^[a-zA-ZÑñ ]{2,30}$/)
         .exists(),
@@ -39,6 +40,7 @@ export const insertar = [
     }
 ]
 
+
 export const actualizar = [
     check('id')
         .matches(/^\d{1,10}$/)
@@ -49,12 +51,16 @@ export const actualizar = [
     check('rol_')
         .matches(/^\d{1,10}$/)
         .exists(),
-    check('hospital')
+    check('lugar')
         .matches(/^\d{1,10}$/)
         .exists(),
     check('nombre')
         .matches(/^[a-zA-ZÑñ ]{2,30}$/)
         .exists(),
+    check('variable')
+        .matches(/^\d{1,10}$/),
+    check('lugar')
+        .matches(/^\d{1,10}$/),
     check('ape1')
         .matches(/^[a-zA-ZÑñ ]{2,30}$/)
         .exists(),
@@ -93,6 +99,8 @@ export const validar = [
         .exists(),
     check('ape2')
         .matches(/^[a-zA-ZÑñ ]{2,30}$/),
+    check('variable')
+        .matches(/^\d{1,10}$/),
     check('celular')
         .matches(/^\d{5,10}$/),
     check('correo')

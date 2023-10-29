@@ -19,7 +19,7 @@ export class Opeinf3 {
     listarMes = async (gestion) => {
         // console.log(gestion)
         const sql =
-            `SELECT m.num as id, concat(m.mes) as nombre 
+            `SELECT m.id as id, concat(m.mes) as nombre 
             FROM mes m
             inner join gestion g on g.id = m.gestion 
             where g.id = ${pool.escape(gestion)} and  m.eliminado = false  ORDER BY m.num asc `;
@@ -29,83 +29,28 @@ export class Opeinf3 {
         return rows
     }
 
-    listarMun = async (red) => {
-        
-        const sql =
-            `SELECT m.id as id, concat(m.municipio) as nombre 
-            FROM municipio m 
-            inner join red r on r.id = m.red 
-            where r.id = ${pool.escape(red)}  ORDER BY m.municipio asc `;
-        const [rows] = await pool.query(sql)
-        // console.log(rows, 'red')
-        return rows
-    }
+    listardatos = async (datos) => {
 
-    listarVariableinicio = async () => {
-        const sql =
-            `SELECT v.id, concat(v.num,'.',v.variable) as nombre 
-            FROM variable v
-            inner join gestion g on g.id = v.gestion 
-            inner join rol r on r.id = v.rol
-            where v.estado = 1 and g.gestion = ${pool.escape(new Date().getFullYear())} and r.nivel = 5 ORDER BY v.num ASC `;
-        const [rows] = await pool.query(sql)
-        return rows
-    }
-
-    listarVariable = async (gestion,) => {
-        const sql =
-            `SELECT v.id, concat(v.num,'.',v.variable) as nombre 
-            FROM variable v
-            inner join gestion g on g.id = v.gestion 
-            inner join rol r on r.id = v.rol
-            where  g.id = ${pool.escape(gestion)} and r.nivel = 5 and v.estado = 1 ORDER BY v.num ASC `;
-        const [rows] = await pool.query(sql)
-        return rows
-    }
-
-
-    listarIndicadores = async (datos) => {
         const sql1 =
-            `SELECT i.id, concat(i.num,'.',i.indicador) as indicador, v.id as variable
-            FROM indicador i
-            inner join variable v on v.id = i.variable
-            where i.estado = 1 and v.id = ${pool.escape(datos.variable)} ORDER BY i.num ASC `;
+            `select v.establecimiento, DATE_FORMAT(max(v.fecha),"%Y/%m/%d") as fecha, v.estado 
+             from valor v
+             left join establecimiento e on e.id = v.establecimiento
+             inner join municipio m on m.id = e.municipio
+            where v.gestion=${pool.escape(datos.gestion)} and v.mes = ${pool.escape(datos.mes1)} and m.red = ${pool.escape(datos.sred)} 
+            GROUP by establecimiento`;
         const [rows1] = await pool.query(sql1)
-        return rows1
+        // console.log(rows1, datos)
+
+        const sql2 =
+            `select e.id, concat(e.establecimiento, ' (', m.municipio,')') as establecimiento, 0 as estado from establecimiento e
+                    inner join municipio m on m.id = e.municipio
+                    where e.eliminado = 0
+                    and m.red = ${pool.escape(datos.sred)}
+                    order by m.municipio, e.establecimiento asc`;
+        const [rows2] = await pool.query(sql2)
+        console.log(rows2)
+        return [rows1, rows2]
     }
-
-
-
-
-
-    listarCabeceras = async (datos) => {
-        // console.log(datos.variable,'modelo')
-
-        const sqlCabeceras =
-            `select id_ as id, input,idinput,nivel, tope,orden, span,orndegen as ordengen, variable from cabeceras 
-                     WHERE variable = ${pool.escape(datos.variable)} order by orndegen asc`;
-        const [cabeceras] = await pool.query(sqlCabeceras)
-        return cabeceras
-    }
-
-
-
-    listarDatosTodosVariable = async (datos) => {
-    console.log(datos, 'establecimiento')
-
-        const sql1 =
-            `select v.id, v.variable, v.indicador, v.input as idinput, i.input,  sum(v.valor) as valor from valor v
-            inner join mes m on m.id = v.mes
-            inner join input i on i.id = v.input
-            inner join establecimiento e on e.id = v.establecimiento
-            inner join municipio mun on mun.id = e.municipio
-            WHERE mun.id = ${pool.escape(datos.municipio)}  and v.variable = ${pool.escape(datos.variable)}  
-            and v.gestion = ${pool.escape(datos.gestion)}   and m.num >= ${pool.escape(datos.mes1)}  and m.num <= ${pool.escape(datos.mes2)}  
-            GROUP by v.input order by i.ordengen asc;`;
-        const [rows1] = await pool.query(sql1) 
-        return rows1
-    }
-
 
 }
 

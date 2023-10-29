@@ -11,6 +11,9 @@ export const insertar = [
     check('municipio')
         .matches(/^\d{1,10}$/)
         .exists(),
+    check('ssector')
+        .matches(/^\d{1,10}$/)
+        .exists(),
     check('creado')
         .exists()
         .matches(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/),
@@ -34,6 +37,9 @@ export const editar = [
         .matches(/^\w{1,100}\s?[()/a-zA-Z.@, Ññ0-9_-]{1,100}?$/)
         .exists(),
     check('municipio')
+        .matches(/^\d{1,10}$/)
+        .exists(),
+    check('ssector')
         .matches(/^\d{1,10}$/)
         .exists(),
     check('modificado')

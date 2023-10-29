@@ -6,9 +6,10 @@ export class Est {
 
     listar = async (cantidad) => {
         const sql =
-            `SELECT e.id, e.establecimiento, m.municipio, m.id as idmunicipio, e.eliminado FROM establecimiento e
+            `SELECT e.id, e.establecimiento,e.cod, m.municipio, m.id as idmunicipio,   s.id as idssector, s.ssector, e.eliminado FROM establecimiento e
             inner join municipio m on m.id = e.municipio
-         order by e.establecimiento asc limit ${pool.escape(cantidad)}`;
+            inner join ssector s on s.id = e.ssector
+         order by e.id desc limit ${pool.escape(cantidad)}`;
         const [rows] = await pool.query(sql)
 
         const sql_ =
@@ -22,8 +23,12 @@ export class Est {
         const sql =
             `SELECT id, municipio as nombre FROM municipio;`
         const [rows] = await pool.query(sql)
+        const sql1 =
+            `SELECT id, ssector as nombre FROM ssector`
+        const [rows1] = await pool.query(sql1)
 
-        return rows
+
+        return [rows, rows1]
     }
 
 
@@ -33,8 +38,16 @@ export class Est {
         const [result] = await pool.query(sqlExists)
 
         if (result.length === 0) {
-            await pool.query("INSERT INTO establecimiento SET  ?", datos)
-            return await this.listar(cantidad)
+            const [result] = await pool.query("INSERT INTO establecimiento SET  ?", datos)
+            if (result.insertId > 0) {
+                let cod = 'H-' + result.insertId
+                const sql_ = `UPDATE establecimiento SET
+                            cod = ${pool.escape(cod)}
+                            WHERE id = ${pool.escape(result.insertId)}`;
+                await pool.query(sql_);
+                return await this.listar(cantidad)
+            } else return { existe: 1 }
+
         } else {
             return {
                 existe: 1,
@@ -51,11 +64,28 @@ export class Est {
             const sql_ = `UPDATE establecimiento SET
                         municipio = ${pool.escape(datos.municipio)},
                         establecimiento = ${pool.escape(datos.establecimiento)},
+                        ssector = ${pool.escape(datos.ssector)},
                         modificado = ${pool.escape(datos.modificado)},
                         usuario = ${pool.escape(datos.usuario)},
                         eliminado = ${pool.escape(datos.estado)}
                         WHERE id = ${pool.escape(datos.id)}`;
             await pool.query(sql_);
+
+            if (datos.estado == 1) {
+                const sqlUsers =
+                    `SELECT u.id FROM usuario u 
+                inner join establecimiento e on e.id = u.establecimiento 
+                WHERE id = ${pool.escape(datos.id)}`;
+                const [result] = await pool.query(sqlUsers)
+                result.forEach(async e => {
+                    const sqlUsers =
+                        `update usuario set estado = 0 where  id =  ${pool.escape(e.id)}`;
+                    await pool.query(sqlUsers)
+                    const sqlSesion =
+                        `delete from sesion where  usuario =  ${pool.escape(e.id)}`;
+                    await pool.query(sqlSesion)
+                })
+            }
             return await this.listar(datos.cantidad)
 
         } else { return { existe: 1 } }
@@ -67,8 +97,9 @@ export class Est {
     listarSiguiente = async (id, cantidad) => {
         // console.log(id, 'siguiente')
         const sql =
-            `SELECT e.id, e.establecimiento,  m.municipio,  m.id as idmunicipio, e.eliminado FROM establecimiento e
+            `SELECT e.id, e.establecimiento,e.cod,  m.municipio,  m.id as idmunicipio,  s.id as idssector, s.ssector, e.eliminado FROM establecimiento e
             inner join municipio m on m.id = e.municipio
+            inner join ssector s on s.id = e.ssector
             WHERE e.id < ${pool.escape(id)} ORDER by e.id DESC  limit ${pool.escape(cantidad)}`;
         const [rows] = await pool.query(sql)
         return rows
@@ -77,12 +108,13 @@ export class Est {
 
 
     listarAnterior = async (id, cantidad) => {
-        // console.log(id, 'anterior')
+        console.log(id, 'llamanda funcion anterior establecimientos')
 
         const sql =
-            `SELECT e.id, e.establecimiento, m.municipio, m.id as idmunicipio, e.eliminado FROM establecimiento e
+            `SELECT e.id, e.establecimiento,e.cod, m.municipio, m.id as idmunicipio,  s.id as idssector, s.ssector, e.eliminado FROM establecimiento e
             inner join municipio m on m.id = e.municipio
-            WHERE e.id > ${pool.escape(id)} order by e.id asc limit ${pool.escape(cantidad)}`;
+            inner join ssector s on s.id = e.ssector
+            WHERE e.id > ${pool.escape(id)} limit ${pool.escape(cantidad)}`;
         const [rows] = await pool.query(sql)
         rows.reverse()
         return rows
@@ -96,8 +128,9 @@ export class Est {
 
     buscar = async (dato) => {
         const sql =
-            `SELECT e.id, e.establecimiento,  m.municipio,  m.id as idmunicipio, e.eliminado FROM establecimiento e
+            `SELECT e.id, e.establecimiento, e.cod, m.municipio,  m.id as idmunicipio, s.id as idssector, s.ssector, e.eliminado FROM establecimiento e
             inner join municipio m on m.id = e.municipio
+            inner join ssector s on s.id = e.ssector
             where e.establecimiento like '${dato}%'`;
         const [rows] = await pool.query(sql)
         return rows

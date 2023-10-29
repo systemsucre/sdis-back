@@ -87,10 +87,11 @@ rutas.post("/buscar", buscar, async (req, res) => {
 rutas.post("/insertar", insertar, async (req, res) => {
 
 
-    const { esta, cantidad, municipio, creado, usuario } = req.body
+    const { esta, cantidad, ssector, municipio, creado, usuario } = req.body
     const datos = {
         establecimiento: esta,
         municipio,
+        ssector,
         creado,
         usuario,
 
@@ -112,11 +113,12 @@ rutas.post("/insertar", insertar, async (req, res) => {
 
 
 rutas.post("/actualizar", editar, async (req, res) => {
-    const { id, esta, cantidad, municipio,estado, modificado, usuario } = req.body
+    const { id, esta, cantidad, ssector, municipio, estado, modificado, usuario } = req.body
     const datos = {
         id: id,
         establecimiento: esta,
         municipio,
+        ssector,
         modificado,
         usuario,
         cantidad, estado
