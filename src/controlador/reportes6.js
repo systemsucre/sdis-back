@@ -173,30 +173,86 @@ rutas.post("/listarred", async (req, res) => {
 //REPORTES
 
 
-//variables del município
-rutas.post("/listar-datos-de-formularios-completos", async (req, res) => {
+// por municipio
+rutas.post("/reportes-formularios-enteros-mi-formulario", async (req, res) => {
     try {
-        const { variable, gestion, mes1, mes2 } = req.body
-        const datos = { variable, gestion, mes1, mes2 }
-        const resultado = await reportes6.listarDatosFormularioCompletoArea(datos)
-        return res.json({ data: resultado, ok: true })
+        const { lista, gestion, mes1, mes2 } = req.body
+        if (lista.length > 0) {
+
+            let cf = 0
+            let dataCabeceras = []
+            let dataInd_ = []
+            let data_ = []
+
+            lista.forEach(async f => {
+                const cabecera = await reportes6.listarCabeceras({ variable: f })
+                const ind = await reportes6.listarIndicadores({ variable: f })
+                for (let c of cabecera) {
+                    dataCabeceras.push(c)
+                }
+                for (let i of ind) {
+                    dataInd_.push(i)
+                }
+
+                cf++
+                if (cf === lista.length) {
+                    let cd = 0
+                    lista.forEach(async f => {
+                        const dataForm = await reportes6.listarDatosFormularioCompletoArea({ variable: f, gestion: gestion, mes1: mes1, mes2: mes2 })
+                        dataForm[1].forEach(e1 => {
+                            dataForm[0].forEach(e2 => {
+                                if (parseInt(e1.input) === parseInt(e2.idinput)) {
+                                    e1.valor = e2.valor
+                                }
+                            })
+                            data_.push(e1)
+                        })
+                        cd++
+                        if (cd === lista.length) {
+                            return res.json({ dataForm: data_, cabeceras: dataCabeceras, indicadores: dataInd_, ok: true })
+                        }
+                    })
+                }
+            })
+        } else return res.json({ msg: 'no se ha encontrado formulario(s)', ok: false })
     } catch (error) {
         console.log(error)
         return res.json({ msg: 'Error en el servidor', ok: false })
     }
 })
 
-rutas.post("/listar-datos-con-varaibles-especificos", async (req, res) => {
+rutas.post("/reportes-formularios-dividido-mi-formulario", async (req, res) => {
     try {
-        const { indicador, gestion, mes1, mes2 } = req.body
-        const datos = { indicador, gestion, mes1, mes2 }
-        const resultado = await reportes6.listarDatosVariableElegidoArea(datos)
-        return res.json({ data: resultado, ok: true })
+        const { lista, variable, gestion, mes1, mes2 } = req.body
+        if (lista.length > 0) {
+            const cabecera = await reportes6.listarCabeceras({ variable: variable })
+            const ind = await reportes6.listarIndicadores({ variable: variable })
+            let data_ = []
+            let cd = 0
+            lista.forEach(async f => {
+                const dataForm = await reportes6.listarDatosVariableElegidoArea({ indicador: f, gestion: gestion, mes1: mes1, mes2: mes2 })
+                dataForm[1].forEach(e1 => {
+                    dataForm[0].forEach(e2 => {
+                        if (parseInt(e1.input) === parseInt(e2.idinput)) {
+                            e1.valor = e2.valor
+                        }
+                    })
+                    data_.push(e1)
+                })
+                cd++
+                if (cd === lista.length) {
+                    return res.json({ dataForm: data_, cabeceras: cabecera, indicadores: ind, ok: true })
+                }
+            })
+        } else return res.json({ msg: 'no se ha encontrado la variable', ok: false })
+
     } catch (error) {
         console.log(error)
         return res.json({ msg: 'Error en el servidor', ok: false })
     }
 })
+
+
 
 
 

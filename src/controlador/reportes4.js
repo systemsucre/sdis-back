@@ -93,16 +93,6 @@ rutas.post("/listarindicadores", async (req, res) => {
         return res.json({ msg: 'Error en el servidor', ok: false })
     }
 })
-rutas.post("/maxorden", async (req, res) => {
-    try {
-        const resultado = await reportes4.maxordengen(req.body.id)
-        return res.json({ data: resultado, ok: true })
-    } catch (error) {
-        console.log(error)
-        return res.json({ msg: 'Error en el servidor', ok: false })
-    }
-})
-
 
 
 
@@ -124,7 +114,7 @@ rutas.post("/listarCabeceras", async (req, res) => {
 
 rutas.post("/listarhospitales", async (req, res) => {
     try {
-        const { smun,  } = req.body
+        const { smun, } = req.body
         const datos = { smun, }
         const resultado = await reportes4.listarHospitales(datos)
         // console.log(resultado)
@@ -137,30 +127,130 @@ rutas.post("/listarhospitales", async (req, res) => {
 })
 
 
+// REPORTES
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// FORMULARIOS NIVEL ESTABLECIMIENTOS
 
 
-//REPORTES
-
-
-//variables del município
-rutas.post("/unavariableM", async (req, res) => {
+rutas.post("/procesar-por-establecimiento_form_est", async (req, res) => {
     try {
+        let data__ = []
+        let data_ = []
+        let contador_color = 2
+
         const { smun, variable, gestion, mes1, mes2 } = req.body
-        const datos = { smun, variable, gestion, mes1, mes2 }
-        const resultado = await reportes4.listarDatosTodosVariableM(datos)
-        return res.json({ data: resultado, ok: true })
+        const cabecera = await reportes4.listarCabeceras({ variable: variable })
+        const resultado = await reportes4.listarHospitales({ smun: smun })
+        // console.log('estab', resultado)
+
+        if (resultado.length == 0) {
+            return res.json({ ok: false, msg: 'no se encontro hospital' })
+        }
+        let indicador = await reportes4.listarIndicadores({ variable: variable })
+        let contadorMunicipio = 0
+
+        resultado.forEach(async m => {
+            let rango = 1
+            if ((contador_color % 2) == 0)
+                indicador.forEach(i => {
+                    data__.push({ color: 1, est: rango == 1 ? m.nombre : null, id: i.id, idest: m.id, indicador: i.indicador, variable: i.variable })
+                    rango = 0
+                })
+            else
+                indicador.forEach(i => {
+                    data__.push({ color: 0, est: rango == 1 ? m.nombre : null, id: i.id, idest: m.id, indicador: i.indicador, variable: i.variable })
+                    rango = 0
+                })
+
+            contador_color++
+            contadorMunicipio++
+            if (contadorMunicipio == resultado.length) {
+                let cd = 0
+                resultado.forEach(async m => {
+                    const dataForm = await reportes4.listarDatosFormularioPorHospital({ est: m.id, variable: variable, gestion: gestion, mes1: mes1, mes2: mes2 })
+                    dataForm[1].forEach(i => {
+                        dataForm[0].forEach(v => {
+                            if (parseInt(i.input) === parseInt(v.idinput)) {
+                                i.valor = v.valor
+                            }
+                        })
+                        i.idest = m.id
+                        i.est = m.nombre
+                        data_.push(i)
+                    })
+                    cd++
+                    if (cd === resultado.length) {
+                        console.log(cabecera)
+                        return res.json({ ok: true, conf: data__, data: data_, cabecera: cabecera })
+                    }
+                })
+            }
+        })
     } catch (error) {
         console.log(error)
         return res.json({ msg: 'Error en el servidor', ok: false })
     }
 })
 
-rutas.post("/indicadorespecificoM", async (req, res) => {
+
+// POR MUNICIPIOS
+rutas.post("/procesar-por-municipio_form_est", async (req, res) => {
     try {
-        const { smun, indicador, gestion, mes1, mes2 } = req.body
-        const datos = { smun, indicador, gestion, mes1, mes2 }
-        const resultado = await reportes4.listarDatosVariableElegidoM(datos)
-        return res.json({ data: resultado, ok: true })
+        let data__ = []
+        let data_ = []
+        let contador_color = 2
+
+        const { smun,mun, variable, gestion, mes1, mes2 } = req.body
+        const cabecera = await reportes4.listarCabeceras({ variable: variable })
+        const resultado = [{id:smun, nombre: 'MUNICIPIO : '+ mun  }]
+        // console.log('muni', resultado)
+
+        if (resultado.length == 0) {
+            return res.json({ ok: false, msg: 'no se encontro hospital' })
+        }
+        let indicador = await reportes4.listarIndicadores({ variable: variable })
+        let contadorMunicipio = 0
+
+        resultado.forEach(async m => {
+            let rango = 1
+            if ((contador_color % 2) == 0)
+                indicador.forEach(i => {
+                    data__.push({ color: 1, est: rango == 1 ? m.nombre : null, id: i.id, idest: m.id, indicador: i.indicador, variable: i.variable })
+                    rango = 0
+                })
+            else
+                indicador.forEach(i => {
+                    data__.push({ color: 0, est: rango == 1 ? m.nombre : null, id: i.id, idest: m.id, indicador: i.indicador, variable: i.variable })
+                    rango = 0
+                })
+
+            contador_color++
+            contadorMunicipio++
+            if (contadorMunicipio == resultado.length) {
+                let cd = 0
+                resultado.forEach(async m => {
+                    const dataForm = await reportes4.listarDatosFormularioEst_Municipio({ mun: m.id, variable: variable, gestion: gestion, mes1: mes1, mes2: mes2 })
+                    dataForm[1].forEach(i => {
+                        dataForm[0].forEach(v => {
+                            if (parseInt(i.input) === parseInt(v.idinput)) {
+                                i.valor = v.valor
+                            }
+                        })
+                        i.idest = m.id
+                        i.est = m.nombre
+                        data_.push(i)
+                    })
+                    cd++
+                    if (cd === resultado.length) {
+                        // console.log(cabecera)
+                        return res.json({ ok: true, conf: data__, data: data_, cabecera: cabecera })
+                    }
+                })
+            }
+        })
     } catch (error) {
         console.log(error)
         return res.json({ msg: 'Error en el servidor', ok: false })
@@ -168,82 +258,258 @@ rutas.post("/indicadorespecificoM", async (req, res) => {
 })
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// REPORTES DINAMICO
+// NIVEL FORMULARIO: ESTABLECIMIENTO
 
 
-// consolidado
-rutas.post("/unavariableconsolidado", async (req, res) => {
+
+rutas.post("/reportes-formularios-enteros-est-nivel-5", async (req, res) => {
     try {
-        const { smun, variable, gestion, mes1, mes2 } = req.body
-        const datos = { smun, variable, gestion, mes1, mes2 }
-        const resultado = await reportes4.listarDatosTodosVariableConsolidado(datos)
-        return res.json({ data: resultado, ok: true })
+        const { lista, est, gestion, mes1, mes2 } = req.body
+        console.log(req.body)
+        if (lista.length > 0) {
+
+            let cf = 0
+            let dataCabeceras = []
+            let dataInd_ = []
+            let data_ = []
+
+            lista.forEach(async f => {
+                const cabecera = await reportes4.listarCabeceras({ variable: f })
+                const ind = await reportes4.listarIndicadores({ variable: f })
+                for (let c of cabecera) {
+                    dataCabeceras.push(c)
+                }
+                for (let i of ind) {
+                    dataInd_.push(i)
+                }
+
+                cf++
+                if (cf === lista.length) {
+                    let cd = 0
+                    lista.forEach(async f => {
+                        const dataForm = await reportes4.listarDatosTodosVariableEstablecimiento({ variable: f, est: est, gestion: gestion, mes1: mes1, mes2: mes2 })
+                        dataForm[1].forEach(e1 => {
+                            dataForm[0].forEach(e2 => {
+                                if (parseInt(e1.input) === parseInt(e2.idinput)) {
+                                    e1.valor = e2.valor
+                                }
+                            })
+                            data_.push(e1)
+                        })
+                        cd++
+                        if (cd === lista.length) {
+                            return res.json({ dataForm: data_, cabeceras: dataCabeceras, indicadores: dataInd_, ok: true })
+                        }
+                    })
+
+                }
+
+            })
+        } else return res.json({ msg: 'no se ha encontrado formulario(s)', ok: false })
     } catch (error) {
         console.log(error)
         return res.json({ msg: 'Error en el servidor', ok: false })
     }
 })
-
-rutas.post("/indicadorespecificoconsolidado", async (req, res) => {
+rutas.post("/reportes-formularios-dividido-est-nivel-5", async (req, res) => {
     try {
-        const { smun, indicador, gestion, mes1, mes2 } = req.body
-        const datos = { smun, indicador, gestion, mes1, mes2 }
-        const resultado = await reportes4.listarDatosVariableElegidoConsolidado(datos)
-        return res.json({ data: resultado, ok: true })
+        const { lista, est, variable, gestion, mes1, mes2 } = req.body
+        if (lista.length > 0) {
+            const cabecera = await reportes4.listarCabeceras({ variable: variable })
+            const ind = await reportes4.listarIndicadores({ variable: variable })
+            let data_ = []
+            let cd = 0
+            lista.forEach(async f => {
+                const dataForm = await reportes4.listarDatosVariableElegidoEstablecimiento({ indicador: f, est: est, gestion: gestion, mes1: mes1, mes2: mes2 })
+                dataForm[1].forEach(e1 => {
+                    dataForm[0].forEach(e2 => {
+                        if (parseInt(e1.input) === parseInt(e2.idinput)) {
+                            e1.valor = e2.valor
+                        }
+                    })
+                    data_.push(e1)
+                })
+                cd++
+                if (cd === lista.length) {
+                    return res.json({ dataForm: data_, cabeceras: cabecera, indicadores: ind, ok: true })
+                }
+            })
+        } else return res.json({ msg: 'no se ha encontrado la variable', ok: false })
     } catch (error) {
+
         console.log(error)
         return res.json({ msg: 'Error en el servidor', ok: false })
     }
 })
 
-
-// por establecimiento
-rutas.post("/unavariableporestablecimiento", async (req, res) => {
+// por municipio CONSOLIDADO
+rutas.post("/reportes-formularios-enteros-est-nivel-4", async (req, res) => {
     try {
-        const { est, variable, gestion, mes1, mes2 } = req.body
-        const datos = { est, variable, gestion, mes1, mes2 }
-        const resultado = await reportes4.listarDatosTodosVariableEstablecimiento(datos)
-        return res.json({ data: resultado, ok: true })
+        const { lista, gestion, mes1, mes2 } = req.body
+        if (lista.length > 0) {
+
+            let cf = 0
+            let dataCabeceras = []
+            let dataInd_ = []
+            let data_ = []
+
+            lista.forEach(async f => {
+                const cabecera = await reportes4.listarCabeceras({ variable: f })
+                const ind = await reportes4.listarIndicadores({ variable: f })
+                for (let c of cabecera) {
+                    dataCabeceras.push(c)
+                }
+                for (let i of ind) {
+                    dataInd_.push(i)
+                }
+
+                cf++
+                if (cf === lista.length) {
+                    let cd = 0
+                    lista.forEach(async f => {
+                        const dataForm = await reportes4.listarDatosTodosVariableEstablecimiento_nivel_4({ variable: f, est: req.body.smun, gestion: gestion, mes1: mes1, mes2: mes2 })
+                        dataForm[1].forEach(e1 => {
+                            dataForm[0].forEach(e2 => {
+                                if (parseInt(e1.input) === parseInt(e2.idinput)) {
+                                    e1.valor = e2.valor
+                                }
+                            })
+                            data_.push(e1)
+                        })
+                        cd++
+                        if (cd === lista.length) {
+                            return res.json({ dataForm: data_, cabeceras: dataCabeceras, indicadores: dataInd_, ok: true })
+                        }
+                    })
+                }
+            })
+        } else return res.json({ msg: 'no se ha encontrado formulario(s)', ok: false })
     } catch (error) {
         console.log(error)
         return res.json({ msg: 'Error en el servidor', ok: false })
     }
 })
 
-rutas.post("/indicadorespecificoestablecimiento", async (req, res) => {
+rutas.post("/reportes-formularios-dividido-est-nivel-4", async (req, res) => {
     try {
-        const { est, indicador, gestion, mes1, mes2 } = req.body
-        const datos = { est, indicador, gestion, mes1, mes2 }
-        const resultado = await reportes4.listarDatosVariableElegidoEstablecimiento(datos)
-        return res.json({ data: resultado, ok: true })
+        const { lista, variable, gestion, mes1, mes2 } = req.body
+        if (lista.length > 0) {
+            const cabecera = await reportes4.listarCabeceras({ variable: variable })
+            const ind = await reportes4.listarIndicadores({ variable: variable })
+            let data_ = []
+            let cd = 0
+            lista.forEach(async f => {
+                const dataForm = await reportes4.listarDatosVariableElegidoEstablecimiento_nivel_4({ indicador: f, est: req.body.smun, gestion: gestion, mes1: mes1, mes2: mes2 })
+                dataForm[1].forEach(e1 => {
+                    dataForm[0].forEach(e2 => {
+                        if (parseInt(e1.input) === parseInt(e2.idinput)) {
+                            e1.valor = e2.valor
+                        }
+                    })
+                    data_.push(e1)
+                })
+                cd++
+                if (cd === lista.length) {
+                    return res.json({ dataForm: data_, cabeceras: cabecera, indicadores: ind, ok: true })
+                }
+            })
+        } else return res.json({ msg: 'no se ha encontrado la variable', ok: false })
+
     } catch (error) {
         console.log(error)
         return res.json({ msg: 'Error en el servidor', ok: false })
     }
 })
 
-// listar datos por formulario
-rutas.post("/listardatosformulario", async (req, res) => {
+
+/// FORMULARIOS DE MUNICIPIO
+
+// por municipio
+rutas.post("/reportes-formularios-enteros-mi-formulario", async (req, res) => {
     try {
-        const { est, variable, gestion, mes1, mes2 } = req.body
-        const datos = { est, variable, gestion, mes1, mes2 }
-        const resultado = await reportes4.listarDatosFormulario(datos)
-        return res.json({ data: resultado, ok: true })
+        const { lista, gestion, mes1, mes2 } = req.body
+        if (lista.length > 0) {
+
+            let cf = 0
+            let dataCabeceras = []
+            let dataInd_ = []
+            let data_ = []
+
+            lista.forEach(async f => {
+                const cabecera = await reportes4.listarCabeceras({ variable: f })
+                const ind = await reportes4.listarIndicadores({ variable: f })
+                for (let c of cabecera) {
+                    dataCabeceras.push(c)
+                }
+                for (let i of ind) {
+                    dataInd_.push(i)
+                }
+
+                cf++
+                if (cf === lista.length) {
+                    let cd = 0
+                    lista.forEach(async f => {
+                        const dataForm = await reportes4.listarDatosTodosVariablemun_nivel_4({ variable: f, est: req.body.smun, gestion: gestion, mes1: mes1, mes2: mes2 })
+                        dataForm[1].forEach(e1 => {
+                            dataForm[0].forEach(e2 => {
+                                if (parseInt(e1.input) === parseInt(e2.idinput)) {
+                                    e1.valor = e2.valor
+                                }
+                            })
+                            data_.push(e1)
+                        })
+                        cd++
+                        if (cd === lista.length) {
+                            return res.json({ dataForm: data_, cabeceras: dataCabeceras, indicadores: dataInd_, ok: true })
+                        }
+                    })
+                }
+            })
+        } else return res.json({ msg: 'no se ha encontrado formulario(s)', ok: false })
     } catch (error) {
         console.log(error)
         return res.json({ msg: 'Error en el servidor', ok: false })
     }
 })
 
-rutas.post("/listardatosformularioconsolidado", async (req, res) => {
+rutas.post("/reportes-formularios-dividido-mi-formulario", async (req, res) => {
     try {
-        const {smun, variable, gestion, mes1, mes2 } = req.body
-        const datos = {smun, variable, gestion, mes1, mes2 }
-        const resultado = await reportes4.listarDatosFormularioConsolidado(datos)
-        return res.json({ data: resultado, ok: true })
+        const { lista, variable, gestion, mes1, mes2 } = req.body
+        if (lista.length > 0) {
+            const cabecera = await reportes4.listarCabeceras({ variable: variable })
+            const ind = await reportes4.listarIndicadores({ variable: variable })
+            let data_ = []
+            let cd = 0
+            lista.forEach(async f => {
+                const dataForm = await reportes4.listarDatosVariableElegidomun_nivel_4({ indicador: f, est: req.body.smun, gestion: gestion, mes1: mes1, mes2: mes2 })
+                dataForm[1].forEach(e1 => {
+                    dataForm[0].forEach(e2 => {
+                        if (parseInt(e1.input) === parseInt(e2.idinput)) {
+                            e1.valor = e2.valor
+                        }
+                    })
+                    data_.push(e1)
+                })
+                cd++
+                if (cd === lista.length) {
+                    return res.json({ dataForm: data_, cabeceras: cabecera, indicadores: ind, ok: true })
+                }
+            })
+        } else return res.json({ msg: 'no se ha encontrado la variable', ok: false })
+
     } catch (error) {
         console.log(error)
         return res.json({ msg: 'Error en el servidor', ok: false })
     }
 })
+
+
+
+
 
 export default rutas;

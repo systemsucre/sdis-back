@@ -118,90 +118,60 @@ export class Reportes5 {
         return rh
     }
 
-    maxordengen = async (id) => {
-        // console.log(datos.variable,'modelo')
-
-        const sqlMax =
-            `select max(orndegen) as cantidad from cabeceras 
-                     WHERE variable = ${pool.escape(id)}`;
-        const [cabeceras] = await pool.query(sqlMax)
-        return cabeceras[0].cantidad
-    }
-
-
-    // REPORTES 
 
 
 
-    // reportes variables del municipio
+    // REPORTES
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    listarDatosTodosVariableM = async (datos) => {
-        // console.log(datos, 'una variable')
+    // FORMULARIOS NIVEL ESTABLECIMIENTOS
 
-        const sql1 =
-            `select v.id, v.variable, v.indicador, v.input as idinput, i.input,  sum(v.valor) as valor 
-            from valor v
-            inner join mes m on m.id = v.mes
-            inner join entrada i on i.id_ = v.input
-            WHERE v.mun = ${pool.escape(datos.smun)}  and v.variable = ${pool.escape(datos.variable)}  
-            and v.gestion = ${pool.escape(datos.gestion)}   and m.num >= ${pool.escape(datos.mes1)}  and 
-            m.num <= ${pool.escape(datos.mes2)}  
-            GROUP by v.input order by i.ordengen asc;`;
-        const [rows1] = await pool.query(sql1)
-        // EL ORDEN ES EL ORDENGEN DEL INPUT, ESTE VALOR SE LISTA PARA LAS TABLAS
-        const sql2 =
-            `SELECT ip.id_ as input, ind.id as indicador, 0 as valor
-                    FROM  entrada ip 
-                    inner join indicador ind on ind.id = ip.indicador_
-                    where ip.variable =${pool.escape(datos.variable)} and ip.estado = 1 and ind.estado = 1
-                    ORDER BY ip.ordengen  ASC `;
 
-        const [rows2] = await pool.query(sql2)
-        return [rows1, rows2]
-    }
-
-    // un indicador en especifico
-    listarDatosVariableElegidoM = async (datos) => {
-        const sql1 =
-            `select v.id, v.variable, v.indicador, v.input as idinput, i.input,  sum(v.valor) as valor 
-            from valor v
-            inner join mes m on m.id = v.mes
-            inner join entrada i on i.id_ = v.input
-            WHERE v.mun = ${pool.escape(datos.smun)} 
-            and v.gestion = ${pool.escape(datos.gestion)}   and m.num >= ${pool.escape(datos.mes1)}  and i.estado = 1
-            and m.num <= ${pool.escape(datos.mes2)}  and v.indicador = ${pool.escape(datos.indicador)} 
-            GROUP by v.input order by i.ordengen asc;`;
-        const [rows1] = await pool.query(sql1)
-        const sql2 =
-            `SELECT ip.id_ as input, ind.id as indicador, 0 as valor
-                FROM  entrada ip 
-                inner join indicador ind on ind.id = ip.indicador_
-                where ip.indicador_ =${pool.escape(datos.indicador)} and ip.estado = 1 and ind.estado = 1
-                ORDER BY ip.ordengen  ASC `;
-
-        const [rows2] = await pool.query(sql2)
-        return [rows1, rows2]
-    }
-
-    //////////////////////////////////////////////////////////////
-    //////////////////////////////////////////////////////////////
-    //////////////////////////////////////////////////////////////
-
-    listarDatosTodosVariableConsolidado = async (datos) => {
-        // console.log(datos, 'una variable')
+    listarDatosFormularioPorHospital = async (datos) => {
 
         const sql1 =
             `select v.id, v.variable, v.indicador, v.input as idinput, i.input,  sum(v.valor) as valor from valor v
-            inner join mes m on m.id = v.mes
-            inner join entrada i on i.id_ = v.input
-            inner join establecimiento e on e.id = v.establecimiento
-            inner join municipio mun on mun.id = e.municipio
-            WHERE mun.id = ${pool.escape(datos.smun)}  
-            and v.variable = ${pool.escape(datos.variable)}  
-            and v.gestion = ${pool.escape(datos.gestion)}   and m.num >= ${pool.escape(datos.mes1)}  and m.num <= ${pool.escape(datos.mes2)}  and i.estado = 1
-            GROUP by v.input order by i.ordengen asc;`;
+                inner join mes m on m.id = v.mes
+                inner join entrada i on i.id_ = v.input
+                inner join establecimiento e on e.id = v.establecimiento
+                WHERE e.id = ${pool.escape(datos.est)}  
+                and v.variable = ${pool.escape(datos.variable)}  
+                and v.gestion = ${pool.escape(datos.gestion)}   and m.num >= ${pool.escape(datos.mes1)}  and m.num <= ${pool.escape(datos.mes2)}  and i.estado = 1
+                GROUP by v.input order by i.ordengen asc;`;
         // console.log(sql1)
         const [rows1] = await pool.query(sql1)
+        // console.log(rows1, 'datos de la pirmera lista')
+
+        const sql2 =
+            `SELECT ip.id_ as input, ind.id as indicador, 0 as valor
+        FROM  entrada ip 
+        inner join indicador ind on ind.id = ip.indicador_
+        where ip.variable =${pool.escape(datos.variable)} and ip.estado = 1 and ind.estado = 1
+        ORDER BY ip.ordengen  ASC `;
+
+        const [rows2] = await pool.query(sql2)
+        return [rows1, rows2]
+    }
+
+    // procesar por municipio
+
+    listarDatosFormularioEst_Municipio = async (datos) => {
+
+        const sql1 =
+            `select v.id, v.variable, v.indicador, v.input as idinput, i.input,  sum(v.valor) as valor from valor v
+                        inner join mes m on m.id = v.mes
+                        inner join entrada i on i.id_ = v.input
+                        inner join establecimiento e on e.id = v.establecimiento
+                        WHERE e.municipio = ${pool.escape(datos.mun)}  
+                        and v.variable = ${pool.escape(datos.variable)}  
+                        and v.gestion = ${pool.escape(datos.gestion)}   and m.num >= ${pool.escape(datos.mes1)}  and m.num <= ${pool.escape(datos.mes2)}  and i.estado = 1
+                        GROUP by v.input order by i.ordengen asc;`;
+        // console.log(sql1)
+        const [rows1] = await pool.query(sql1)
+        console.log(rows1, 'datos de la pirmera lista')
+
         const sql2 =
             `SELECT ip.id_ as input, ind.id as indicador, 0 as valor
                 FROM  entrada ip 
@@ -213,32 +183,22 @@ export class Reportes5 {
         return [rows1, rows2]
     }
 
-    // un indicador en especifico
-    listarDatosVariableElegidoConsolidado = async (datos) => {
-        const sql1 =
-            `select v.id, v.variable, v.indicador, v.input as idinput, i.input,  sum(v.valor) as valor from valor v
-            inner join mes m on m.id = v.mes
-            inner join entrada i on i.id_ = v.input
-            inner join establecimiento e on e.id = v.establecimiento
-            inner join municipio mun on mun.id = e.municipio
-            WHERE mun.id = ${pool.escape(datos.smun)} 
-            and v.gestion = ${pool.escape(datos.gestion)}   and m.num >= ${pool.escape(datos.mes1)}  and i.estado = 1
-            and m.num <= ${pool.escape(datos.mes2)}  and v.indicador = ${pool.escape(datos.indicador)} 
-            GROUP by v.input order by i.ordengen asc;`;
-        const [rows1] = await pool.query(sql1)
 
-        const sql2 =
-            `SELECT ip.id_ as input, ind.id as indicador, 0 as valor
-            FROM  entrada ip 
-            inner join indicador ind on ind.id = ip.indicador_
-            where ip.indicador_ =${pool.escape(datos.indicador)} and ip.estado = 1 and ind.estado = 1
-            ORDER BY ip.ordengen  ASC `;
 
-        const [rows2] = await pool.query(sql2)
-        return [rows1, rows2]
 
-    }
 
+
+
+
+    // REPORTES
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    // PARA REPORTES DINAMICOS
+
+    // NIVEL : ESTABLECIMIENTOS
+    // por establecimiennto 
     listarDatosTodosVariableEstablecimiento = async (datos) => {
         // console.log(datos, 'una variable')
 
@@ -289,17 +249,69 @@ export class Reportes5 {
 
     }
 
-    //listar datos por formulario
+    // CONSOLIDADO
+    // por municipio
+    listarDatosTodosVariableEstablecimiento_nivel_4 = async (datos) => {
+        // console.log(datos, 'una variable')
 
-    listarDatosFormulario = async (datos) => {
+        const sql1 =
+            `select v.id, v.variable, v.indicador, v.input as idinput, i.input,  sum(v.valor) as valor from valor v
+                        inner join mes m on m.id = v.mes
+                        inner join entrada i on i.id_ = v.input
+                        inner join establecimiento e on e.id = v.establecimiento
+                        WHERE e.municipio = ${pool.escape(datos.est)}  
+                        and v.variable = ${pool.escape(datos.variable)}  
+                        and v.gestion = ${pool.escape(datos.gestion)}   and m.num >= ${pool.escape(datos.mes1)}  and m.num <= ${pool.escape(datos.mes2)}  and i.estado = 1
+                        GROUP by v.input order by i.ordengen asc;`;
+        // console.log(sql1)
+        const [rows1] = await pool.query(sql1)
+        const sql2 =
+            `SELECT ip.id_ as input, ind.id as indicador, 0 as valor
+                            FROM  entrada ip 
+                            inner join indicador ind on ind.id = ip.indicador_
+                            where ip.variable =${pool.escape(datos.variable)} and ip.estado = 1 and ind.estado = 1
+                            ORDER BY ip.ordengen  ASC `;
+
+        const [rows2] = await pool.query(sql2)
+        return [rows1, rows2]
+    }
+
+    // un indicador en especifico
+    listarDatosVariableElegidoEstablecimiento_nivel_4 = async (datos) => {
+        // console.log(datos, 'elegido conso')
+        const sql1 =
+            `select v.id, v.variable, v.indicador, v.input as idinput, i.input,  sum(v.valor) as valor from valor v
+                        inner join mes m on m.id = v.mes
+                        inner join entrada i on i.id_ = v.input
+                        inner join establecimiento e on e.id = v.establecimiento
+                        WHERE e.municipio = ${pool.escape(datos.est)} 
+                        and v.gestion = ${pool.escape(datos.gestion)}   and m.num >= ${pool.escape(datos.mes1)}  and i.estado = 1
+                        and m.num <= ${pool.escape(datos.mes2)}  and v.indicador = ${pool.escape(datos.indicador)} 
+                        GROUP by v.input order by i.ordengen asc;`;
+        const [rows1] = await pool.query(sql1)
+
+        const sql2 =
+            `SELECT ip.id_ as input, ind.id as indicador, 0 as valor
+                        FROM  entrada ip 
+                        inner join indicador ind on ind.id = ip.indicador_
+                        where ip.indicador_ =${pool.escape(datos.indicador)} and ip.estado = 1 and ind.estado = 1
+                        ORDER BY ip.ordengen  ASC `;
+
+        const [rows2] = await pool.query(sql2)
+        return [rows1, rows2]
+    }
+
+    // FORMULARIOS DE MUNICIPIO
+
+    // por municipio
+    listarDatosTodosVariablemun_nivel_4 = async (datos) => {
         // console.log(datos, 'una variable')
 
         const sql1 =
             `select v.id, v.variable, v.indicador, v.input as idinput, i.input,  sum(v.valor) as valor from valor v
                     inner join mes m on m.id = v.mes
                     inner join entrada i on i.id_ = v.input
-                    inner join establecimiento e on e.id = v.establecimiento
-                    WHERE e.id = ${pool.escape(datos.est)}  
+                    WHERE v.mun = ${pool.escape(datos.est)}  
                     and v.variable = ${pool.escape(datos.variable)}  
                     and v.gestion = ${pool.escape(datos.gestion)}   and m.num >= ${pool.escape(datos.mes1)}  and m.num <= ${pool.escape(datos.mes2)}  and i.estado = 1
                     GROUP by v.input order by i.ordengen asc;`;
@@ -307,43 +319,81 @@ export class Reportes5 {
         const [rows1] = await pool.query(sql1)
         const sql2 =
             `SELECT ip.id_ as input, ind.id as indicador, 0 as valor
-            FROM  entrada ip 
-            inner join indicador ind on ind.id = ip.indicador_
-            where ip.variable =${pool.escape(datos.variable)} and ip.estado = 1 and ind.estado = 1
-            ORDER BY ip.ordengen  ASC `;
+                        FROM  entrada ip 
+                        inner join indicador ind on ind.id = ip.indicador_
+                        where ip.variable =${pool.escape(datos.variable)} and ip.estado = 1 and ind.estado = 1
+                        ORDER BY ip.ordengen  ASC `;
 
         const [rows2] = await pool.query(sql2)
         return [rows1, rows2]
     }
 
-    
-    listarDatosFormularioConsolidado = async (datos) => {
-        // console.log(datos, 'una variable')
-
+    // un indicador en especifico
+    listarDatosVariableElegidomun_nivel_4 = async (datos) => {
         const sql1 =
             `select v.id, v.variable, v.indicador, v.input as idinput, i.input,  sum(v.valor) as valor from valor v
                     inner join mes m on m.id = v.mes
                     inner join entrada i on i.id_ = v.input
-                    inner join establecimiento e on e.id = v.establecimiento
-                    inner join municipio mn on mn.id = e.municipio
-                    WHERE mn.id = ${pool.escape(datos.smun)}  
-                    and v.variable = ${pool.escape(datos.variable)}  
-                    and v.gestion = ${pool.escape(datos.gestion)}   and m.num >= ${pool.escape(datos.mes1)}  and m.num <= ${pool.escape(datos.mes2)}  and i.estado = 1
+                    WHERE v.mun = ${pool.escape(datos.est)} 
+                    and v.gestion = ${pool.escape(datos.gestion)}   and m.num >= ${pool.escape(datos.mes1)}  and i.estado = 1
+                    and m.num <= ${pool.escape(datos.mes2)}  and v.indicador = ${pool.escape(datos.indicador)} 
                     GROUP by v.input order by i.ordengen asc;`;
-        // console.log(sql1)
         const [rows1] = await pool.query(sql1)
+
         const sql2 =
             `SELECT ip.id_ as input, ind.id as indicador, 0 as valor
-            FROM  entrada ip 
-            inner join indicador ind on ind.id = ip.indicador_
-            where ip.variable =${pool.escape(datos.variable)} and ip.estado = 1 and ind.estado = 1
-            ORDER BY ip.ordengen  ASC `;
+                    FROM  entrada ip 
+                    inner join indicador ind on ind.id = ip.indicador_
+                    where ip.indicador_ =${pool.escape(datos.indicador)} and ip.estado = 1 and ind.estado = 1
+                    ORDER BY ip.ordengen  ASC `;
 
         const [rows2] = await pool.query(sql2)
-        console.log(rows1, 'valores de input')
-
         return [rows1, rows2]
+
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 }
 

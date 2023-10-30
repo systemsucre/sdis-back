@@ -214,52 +214,106 @@ rutas.post("/listarvariable", id, async (req, res) => {
 
 //REPORTES
 
-
-//variables del município
-rutas.post("/unavariableS", async (req, res) => {
+// consolidado
+rutas.post("/reportes-formularios-enteros-sedes", async (req, res) => {
     try {
-        const { variable, gestion, mes1, mes2 } = req.body
-        const datos = { variable, gestion, mes1, mes2 }
-        const resultado = await reportes2.listarDatosTodosVariableS(datos)
-        return res.json({ data: resultado, ok: true })
+        const { lista,  gestion, mes1, mes2 } = req.body
+        if (lista.length > 0) {
+
+            let cf = 0
+            let dataCabeceras = []
+            let dataInd_ = []
+            let data_ = []
+
+            lista.forEach(async f => {
+                const cabecera = await reportes2.listarCabeceras({ variable: f })
+                const ind = await reportes2.listarIndicadores({ variable: f })
+                for (let c of cabecera) {
+                    dataCabeceras.push(c)
+                }
+                for (let i of ind) {
+                    dataInd_.push(i)
+                }
+
+                cf++
+                if (cf === lista.length) {
+                    let cd = 0
+                    lista.forEach(async f => {
+                        const dataForm = await reportes2.listarDatosTodosVariableS({ variable: f, gestion: gestion, mes1: mes1, mes2: mes2 })
+                        dataForm[1].forEach(e1 => {
+                            dataForm[0].forEach(e2 => {
+                                if (parseInt(e1.input) === parseInt(e2.idinput)) {
+                                    e1.valor = e2.valor
+                                }
+                            })
+                            data_.push(e1)
+                        })
+                        cd++
+                        if (cd === lista.length) {
+                            return res.json({ dataForm: data_, cabeceras: dataCabeceras, indicadores: dataInd_, ok: true })
+                        }
+                    })
+                }
+            })
+        } else return res.json({ msg: 'no se ha encontrado formulario(s)', ok: false })
     } catch (error) {
         console.log(error)
         return res.json({ msg: 'Error en el servidor', ok: false })
     }
 })
 
-rutas.post("/indicadorespecificoS", async (req, res) => {
+rutas.post("/reportes-formularios-dividido-sedes", async (req, res) => {
     try {
-        const { indicador, gestion, mes1, mes2 } = req.body
-        const datos = { indicador, gestion, mes1, mes2 }
-        const resultado = await reportes2.listarDatosVariableElegidoS(datos)
-        return res.json({ data: resultado, ok: true })
+        const { lista, variable, gestion, mes1, mes2 } = req.body
+        if (lista.length > 0) {
+            const cabecera = await reportes2.listarCabeceras({ variable: variable })
+            const ind = await reportes2.listarIndicadores({ variable: variable })
+            let data_ = []
+            let cd = 0
+            lista.forEach(async f => {
+                const dataForm = await reportes2.listarDatosVariableElegidoS({ indicador: f, gestion: gestion, mes1: mes1, mes2: mes2 })
+                dataForm[1].forEach(e1 => {
+                    dataForm[0].forEach(e2 => {
+                        if (parseInt(e1.input) === parseInt(e2.idinput)) {
+                            e1.valor = e2.valor
+                        }
+                    })
+                    data_.push(e1)
+                })
+                cd++
+                if (cd === lista.length) {
+                    return res.json({ dataForm: data_, cabeceras: cabecera, indicadores: ind, ok: true })
+                }
+            })
+        } else return res.json({ msg: 'no se ha encontrado la variable', ok: false })
+
     } catch (error) {
         console.log(error)
         return res.json({ msg: 'Error en el servidor', ok: false })
     }
 })
+
 
 
 // REPORTES POR FORMULARIO
 
 
 
-rutas.post("/procesar-por-establecimiento", async (req, res) => {
+rutas.post("/procesar-por-establecimiento", async (req, res) => {   
     try {
         let data__ = []
         let data_ = []
         let contador_color = 2
 
         const { variable, gestion, mes1, mes2 } = req.body
-        const cabecera = await reportes2.listarCabeceras({ variable: variable })
-        const resultado = await reportes2.listarTodosHospital()
+        const cabecera = await reportes2.listarCabeceras({ variable: variable })    
+        const resultado = await reportes2.listarTodosHospital() 
         // console.log('estab', resultado)
 
         if (resultado.length == 0) {
             return res.json({ ok: false, msg: 'no se encontro hospital' })
         }
-        let indicador = await reportes2.listarIndicadores({ variable: variable })
+        let indicador = await reportes2.listarIndicadores({ variable: variable }) 
         let contadorMunicipio = 0
 
         resultado.forEach(async m => {
@@ -940,7 +994,7 @@ rutas.post("/reportes-formularios-dividido-est-nivel-5", async (req, res) => {
                 const dataForm = await reportes2.listarDatosVariableElegidoEstablecimiento({ indicador: f, est: est, gestion: gestion, mes1: mes1, mes2: mes2 })
                 dataForm[1].forEach(e1 => {
                     dataForm[0].forEach(e2 => {
-                        if (parseInt(e1.input) === parseInt(e2.idinput)) {
+                        if (parseInt(e1.input) === parseInt(e2.idinput)) {  
                             e1.valor = e2.valor
                         }
                     })

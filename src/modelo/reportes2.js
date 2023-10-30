@@ -297,7 +297,7 @@ export class Reportes2 {
 
     // para analisis de datos departamental
 
-    listarTodosHospital = async () => {
+    listarTodosHospital = async () => {  
         const h =
             `select e.cod as id, concat(establecimiento,' (', m.municipio, ')') as nombre, 5 as numero from establecimiento e
             inner join municipio m on m.id = e.municipio
